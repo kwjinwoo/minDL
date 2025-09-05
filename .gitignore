@@ -1,0 +1,68 @@
+# Build artifacts
+/build/
+/cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+Makefile
+*.cmake
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.user
+*.userprefs
+
+# Compiler intermediates
+*.o
+*.obj
+*.lo
+*.la
+*.mod
+*.pyc
+*.pyo
+*.pdb
+
+# Test binaries / logs
+/tests/*.log
+/tests/*.out
+/tests/*.exe
+/tests/*_test
+
+# Benchmark binaries
+/benchmarks/*.out
+/benchmarks/*.exe
+
+# Coverage / Profiling
+*.gcda
+*.gcno
+*.gcov
+*.prof
+*.profraw
+*.profdata
+
+# Packaging
+*.tar
+*.gz
+*.zip
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# clang-format / clang-tidy
+.clang-format.cache
+.clang-tidy.cache
+
+# Python (optional: if you use scripts for dataset/preprocessing)
+/__pycache__/
+*.egg-info/
+
+.clang-format
