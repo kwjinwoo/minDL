@@ -1,5 +1,4 @@
 #pragma once
-#include <cstdint>
 #include <initializer_list>
 #include <numeric>
 #include <vector>
@@ -8,8 +7,8 @@ namespace minidl {
 class Shape {
    public:
     Shape() = default;
-    explicit Shape(const std::vector<int64_t>& dims) : dims_(dims) {}
-    Shape(std::initializer_list<int64_t> dims) : dims_(dims) {}
+    explicit Shape(const std::vector<std::size_t>& dims) : dims_(dims) {}
+    Shape(std::initializer_list<std::size_t> dims) : dims_(dims) {}
 
     // copy & move
     Shape(const Shape& other) = default;
@@ -20,11 +19,11 @@ class Shape {
 
     // getter
     std::size_t rank() const noexcept { return dims_.size(); }
-    const std::vector<int64_t>& dims() const noexcept { return dims_; }
-    int64_t operator[](int64_t i) const noexcept { return dims_[i]; }
+    const std::vector<std::size_t>& dims() const noexcept { return dims_; }
+    std::size_t operator[](std::size_t i) const noexcept { return dims_[i]; }
 
     // utils
-    int64_t numel() const noexcept {
+    std::size_t numel() const noexcept {
         if (dims_.empty()) return 1;
 
         bool has_zero = false;
@@ -35,9 +34,8 @@ class Shape {
             }
         }
         if (has_zero) return 0;
-
-        int64_t return_value = 1;
-        return std::accumulate(dims_.begin(), dims_.end(), int64_t{1}, [](int64_t a, int64_t b) { return a * b; });
+        return std::accumulate(dims_.begin(), dims_.end(), std::size_t{1},
+                               [](std::size_t a, std::size_t b) { return a * b; });
     }
 
    private:
@@ -46,6 +44,6 @@ class Shape {
             if (d < 0) throw std::invalid_argument("Shape: negative dimension not allowed");
         }
     }
-    std::vector<int64_t> dims_;
+    std::vector<std::size_t> dims_;
 };
 }  // namespace minidl

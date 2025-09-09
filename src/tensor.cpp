@@ -7,7 +7,9 @@
 #include "minidl/allocators/default.h"
 
 namespace minidl {
-std::vector<int64_t> Tensor::default_strides(const Shape& shape, const DType& dtype) {
+
+std::vector<int64_t> Tensor::default_strides(const Shape& shape) {
+    // stride in element
     const auto dims = shape.dims();
     const int64_t n = static_cast<int64_t>(shape.rank());
 
@@ -19,10 +21,7 @@ std::vector<int64_t> Tensor::default_strides(const Shape& shape, const DType& dt
     }
 
     strides.resize(n);
-
-    int64_t item_size = static_cast<int64_t>(size_of(dtype));
-
-    strides[n - 1] = item_size;
+    strides[n - 1] = 1;
 
     for (int64_t i = n - 2; i >= 0; --i) {
         strides[i] = strides[i + 1] * dims[i + 1];
@@ -30,19 +29,61 @@ std::vector<int64_t> Tensor::default_strides(const Shape& shape, const DType& dt
     return strides;
 }
 
+void Tensor::fill_ones_(void* data, int64_t numel, DType dtype) {
+    if (!data) return;
+    switch (dtype) {
+        case DType::f32: {
+            auto* x = static_cast<float*>(data);
+            std::fill_n(x, numel, 1.0f);
+            break;
+        }
+        case DType::i32: {
+            auto* x = static_cast<int*>(data);
+            std::fill_n(x, numel, 1);
+            break;
+        }
+        default:
+            throw std::runtime_error("Unsupported DType in fill_ones");
+    }
+}
+
 Tensor Tensor::zeros(const Shape& shape, DType dtype, std::shared_ptr<Allocator> alloc) {
     if (alloc == nullptr) alloc = get_default_allocator();
     auto storage = std::make_shared<Storage>(alloc);
 
     Tensor t(shape, dtype, storage);
-    t.strides_ = t.default_strides(shape, dtype);
+    t.strides_ = t.default_strides(shape);
 
-    t.storage_->nbytes = shape.numel() * size_of(dtype);
-    t.storage_->data = (t.storage_->nbytes == 0) ? nullptr : t.storage_->alloc_->allocate(t.storage_->nbytes);
+    t.storage_->nbytes = t.numel() * t.itemsize();
 
-    if (t.storage_->data) {
-        std::memset(t.storage_->data, 0, t.storage_->nbytes);
+    if (t.nbytes() == 0) {
+        t.storage_->data = nullptr;
+        return t;
     }
+    t.storage_->data = t.storage_->alloc_->allocate(t.nbytes());
+
+    if (!t.data()) throw std::bad_alloc{};
+    std::memset(t.data(), 0, t.nbytes());
+    return t;
+}
+
+Tensor Tensor::ones(const Shape& shape, DType dtype, std::shared_ptr<Allocator> alloc) {
+    if (alloc == nullptr) alloc = get_default_allocator();
+    auto storage = std::make_shared<Storage>(alloc);
+
+    Tensor t(shape, dtype, storage);
+    t.strides_ = t.default_strides(shape);
+
+    t.storage_->nbytes = t.numel() * t.itemsize();
+
+    if (t.nbytes() == 0) {
+        t.storage_->data = nullptr;
+        return t;
+    }
+    t.storage_->data = t.storage_->alloc_->allocate(t.nbytes());
+    if (!t.data()) throw std::bad_alloc{};
+
+    t.fill_ones_(t.data(), t.numel(), dtype);
     return t;
 }
 }  // namespace minidl
