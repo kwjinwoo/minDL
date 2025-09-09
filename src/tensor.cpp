@@ -47,6 +47,27 @@ void Tensor::fill_ones_(void* data, int64_t numel, DType dtype) {
     }
 }
 
+bool Tensor::is_contiguous() const noexcept {
+    // 0 element is conventionally contiguous
+    if (numel() == 0) return true;
+
+    int64_t expected = 1;
+    for (int64_t d = static_cast<int64_t>(rank()) - 1; d >= 0; d--) {
+        const int64_t dim = static_cast<int64_t>(shape_[d]);
+        const int64_t s = strides_[d];
+
+        if (dim == 1) {
+            continue;
+        }
+
+        if (s != expected) {
+            return false;
+        }
+        expected *= dim;
+    }
+    return true;
+}
+
 Tensor Tensor::zeros(const Shape& shape, DType dtype, std::shared_ptr<Allocator> alloc) {
     if (alloc == nullptr) alloc = get_default_allocator();
     auto storage = std::make_shared<Storage>(alloc);

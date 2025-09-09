@@ -20,7 +20,7 @@ TEST(TensorFactorys, ZerosCreatesAllZeros) {
     EXPECT_EQ(t.shape().rank(), 2);
     EXPECT_EQ(t.shape()[0], 2);
     EXPECT_EQ(t.shape()[1], 3);
-    // EXPECT_TRUE(t.is_contiguous());
+    EXPECT_TRUE(t.is_contiguous());
     EXPECT_EQ(t.numel(), 6);
     EXPECT_EQ(t.strides()[0], 3);
     EXPECT_EQ(t.strides()[1], 1);
@@ -38,7 +38,7 @@ TEST(TensorFactorys, OnesCreatesAllOnes) {
     EXPECT_EQ(t.shape().rank(), 2);
     EXPECT_EQ(t.shape()[0], 2);
     EXPECT_EQ(t.shape()[1], 3);
-    // EXPECT_TRUE(t.is_contiguous());
+    EXPECT_TRUE(t.is_contiguous());
     EXPECT_EQ(t.numel(), 6);
     EXPECT_EQ(t.strides()[0], 3);
     EXPECT_EQ(t.strides()[1], 1);

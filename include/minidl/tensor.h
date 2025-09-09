@@ -60,7 +60,8 @@ class Tensor {
     std::size_t numel() const noexcept { return shape_.numel(); }
     std::size_t itemsize() const noexcept { return size_of(dtype_); }
     std::size_t nbytes() const noexcept { return numel() * itemsize(); }
-    // bool is_contiguous() const noexcept;
+    std::size_t rank() const noexcept { return shape_.rank(); }
+    bool is_contiguous() const noexcept;
 
     // Tensor contiguous() const;
 
