@@ -107,4 +107,19 @@ Tensor Tensor::ones(const Shape& shape, DType dtype, std::shared_ptr<Allocator> 
     t.fill_ones_(t.data(), t.numel(), dtype);
     return t;
 }
+
+Tensor Tensor::view(const Shape& new_shape) const {
+    if (new_shape.numel() != numel()) {
+        throw std::runtime_error("view: new_shape.numel() must equal the current numel().");
+    }
+    if (numel() != 0 && !is_contiguous()) {
+        throw std::runtime_error("view: tensor must be contiguous (use reshape for non-contiguous).");
+    }
+
+    Tensor out = *this;
+    out.shape_ = new_shape;
+    out.strides_ = default_strides(new_shape);
+    return out;
+}
+
 }  // namespace minidl

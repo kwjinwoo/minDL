@@ -46,7 +46,7 @@ class Tensor {
     static Tensor ones(const Shape& shape, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr);
 
     // view & reshape
-    // Tensor view(const Shape& new_shape) const;
+    Tensor view(const Shape& new_shape) const;
     // Tensor reshape(const Shape& new_shape) const;
     // Tensor t() const;
 
