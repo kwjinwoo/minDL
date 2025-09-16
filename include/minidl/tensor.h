@@ -49,7 +49,7 @@ class Tensor {
     // view & reshape
     Tensor view(const Shape& new_shape) const;
     // Tensor reshape(const Shape& new_shape) const;
-    // Tensor t() const;
+    Tensor transpose(const std::initializer_list<std::size_t> axes_ilist) const;
 
     // get methods
     const Shape& shape() const noexcept { return shape_; }

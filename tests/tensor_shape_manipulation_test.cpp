@@ -15,3 +15,18 @@ TEST(ShapeManipulation, ViewCreate) {
     EXPECT_EQ(v.strides()[0], 2);
     EXPECT_EQ(v.strides()[1], 1);
 }
+
+// ---------- transpose ----------
+TEST(ShapeManipulation, Permute2D) {
+    Tensor a = Tensor::arange(6, DType::i32).view({2, 3});
+    auto b = a.transpose({1, 0});
+    EXPECT_EQ(b.shape().dims(), (std::vector<std::size_t>{3, 2}));
+    EXPECT_EQ(b.strides(), (std::vector<int64_t>{1, 3}));
+}
+
+TEST(TensorTranspose, Permute3D) {
+    Tensor x = Tensor::zeros({2, 3, 4}, DType::f32);
+    auto y = x.transpose({1, 2, 0});
+    EXPECT_EQ(y.shape().dims(), (std::vector<std::size_t>{3, 4, 2}));
+    EXPECT_EQ(y.strides().size(), 3);
+}

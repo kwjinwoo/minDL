@@ -161,6 +161,44 @@ Tensor Tensor::view(const Shape& new_shape) const {
     return out;
 }
 
+Tensor Tensor::transpose(const std::initializer_list<std::size_t> axes_ilist) const {
+    const std::size_t n = rank();
+    if (axes_ilist.size() != n) throw std::runtime_error("axis Size Must be same with rank.");
+
+    std::vector<std::size_t> axes(axes_ilist.begin(), axes_ilist.end());
+
+    std::vector<bool> seen(n, false);
+    for (auto a : axes) {
+        if (a >= n) throw std::runtime_error("axis index out of range");
+        if (seen[a]) throw std::runtime_error("duplicate axis");
+        seen[a] = true;
+    }
+
+    bool identity = true;
+    for (std::size_t i = 0; i < n; ++i) {
+        if (axes[i] != i) {
+            identity = false;
+            break;
+        }
+    }
+    if (identity) return *this;
+
+    Tensor new_tensor = *this;
+    std::vector<std::size_t> new_shape(n);
+    std::vector<int64_t> new_strides(n);
+
+    for (std::size_t i = 0; i < n; ++i) {
+        const std::size_t src = axes[i];
+        new_shape[i] = shape_[src];
+        new_strides[i] = strides_[src];
+    }
+
+    new_tensor.shape_ = Shape(new_shape);
+    new_tensor.strides_ = std::move(new_strides);
+
+    return new_tensor;
+}
+
 Tensor Tensor::contiguous() const {
     if (is_contiguous()) return *this;
     if (numel() == 0) {
