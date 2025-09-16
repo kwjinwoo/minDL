@@ -22,6 +22,7 @@ TEST(ShapeManipulation, Permute2D) {
     auto b = a.transpose({1, 0});
     EXPECT_EQ(b.shape().dims(), (std::vector<std::size_t>{3, 2}));
     EXPECT_EQ(b.strides(), (std::vector<int64_t>{1, 3}));
+    EXPECT_FALSE(b.is_contiguous());
 }
 
 TEST(TensorTranspose, Permute3D) {
@@ -29,4 +30,5 @@ TEST(TensorTranspose, Permute3D) {
     auto y = x.transpose({1, 2, 0});
     EXPECT_EQ(y.shape().dims(), (std::vector<std::size_t>{3, 4, 2}));
     EXPECT_EQ(y.strides().size(), 3);
+    EXPECT_FALSE(y.is_contiguous());
 }
