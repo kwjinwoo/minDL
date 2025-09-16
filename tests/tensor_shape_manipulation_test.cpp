@@ -32,3 +32,23 @@ TEST(TensorTranspose, Permute3D) {
     EXPECT_EQ(y.strides().size(), 3);
     EXPECT_FALSE(y.is_contiguous());
 }
+
+// ---------- reshape ----------
+TEST(ShapeManipulation, ReshapeContiguous) {
+    Tensor a = Tensor::zeros({2, 3}, DType::f32);
+
+    auto b = a.reshape({3, 2});
+    EXPECT_EQ(b.shape().dims(), (std::vector<std::size_t>{3, 2}));
+    EXPECT_EQ(b.strides(), (std::vector<std::int64_t>{2, 1}));
+    EXPECT_TRUE(b.is_contiguous());
+}
+
+TEST(ShapeManipulation, ReshapeNonContiguous) {
+    Tensor a = Tensor::zeros({3, 2}, DType::f32);
+    Tensor b = a.transpose({1, 0});
+
+    auto c = b.reshape({3, 2});
+    EXPECT_EQ(c.shape().dims(), (std::vector<std::size_t>{3, 2}));
+    EXPECT_EQ(c.strides(), (std::vector<std::int64_t>{2, 1}));
+    EXPECT_TRUE(c.is_contiguous());
+}

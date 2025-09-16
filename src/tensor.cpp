@@ -161,6 +161,23 @@ Tensor Tensor::view(const Shape& new_shape) const {
     return out;
 }
 
+Tensor Tensor::reshape(const Shape& new_shape) const {
+    if (new_shape.numel() != numel()) {
+        throw std::runtime_error("reshape: new_shape.numel() must equal the current numel().");
+    }
+    if (numel() == 0 || is_contiguous()) {
+        Tensor new_tensor = *this;
+        new_tensor.shape_ = new_shape;
+        new_tensor.strides_ = default_strides(new_shape);
+        return new_tensor;
+    }
+
+    Tensor new_tensor = this->contiguous();
+    new_tensor.shape_ = new_shape;
+    new_tensor.strides_ = default_strides(new_shape);
+    return new_tensor;
+}
+
 Tensor Tensor::transpose(const std::initializer_list<std::size_t> axes_ilist) const {
     const std::size_t n = rank();
     if (axes_ilist.size() != n) throw std::runtime_error("axis Size Must be same with rank.");
