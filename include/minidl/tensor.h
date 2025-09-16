@@ -44,6 +44,7 @@ class Tensor {
     // static Tensor randn(const Shape& s, DType d = DType::f32, std::shared_ptr<Allocator> alloc = nullptr);
     static Tensor zeros(const Shape& shape, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr);
     static Tensor ones(const Shape& shape, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr);
+    static Tensor arange(std::size_t size, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr);
 
     // view & reshape
     Tensor view(const Shape& new_shape) const;
@@ -55,7 +56,7 @@ class Tensor {
     DType dtype() const noexcept { return dtype_; }
     const std::shared_ptr<Storage>& storage() const noexcept { return storage_; }
     const std::vector<int64_t>& strides() const noexcept { return strides_; }
-    void* data() { return storage_->data; }
+    void* data() const noexcept { return storage_->data; }
 
     std::size_t numel() const noexcept { return shape_.numel(); }
     std::size_t itemsize() const noexcept { return size_of(dtype_); }
@@ -63,7 +64,7 @@ class Tensor {
     std::size_t rank() const noexcept { return shape_.rank(); }
     bool is_contiguous() const noexcept;
 
-    // Tensor contiguous() const;
+    Tensor contiguous() const;
 
    private:
     static std::vector<int64_t> default_strides(const Shape& shape);

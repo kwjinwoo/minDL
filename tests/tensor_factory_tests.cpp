@@ -47,3 +47,23 @@ TEST(TensorFactorys, OnesCreatesAllOnes) {
     ASSERT_NE(p, nullptr);
     expect_all_equal<float>(p, 6, 1.0f);
 }
+
+// ---------- arange ----------
+TEST(TensorFactorys, ArangeCreates) {
+    auto t = Tensor::arange(4, DType::f32);
+
+    EXPECT_EQ(t.dtype(), DType::f32);
+    EXPECT_EQ(t.shape().rank(), 1);
+    EXPECT_EQ(t.shape()[0], 4);
+    EXPECT_EQ(t.numel(), 4);
+
+    auto* p = static_cast<const float*>(t.data());
+    ASSERT_NE(p, nullptr);
+
+    float expected_value = 0.0f;
+    const std::size_t n = 4;
+    for (std::size_t i = 0; i < n; i++) {
+        EXPECT_EQ(p[i], expected_value);
+        expected_value += 1.0f;
+    }
+}
