@@ -66,6 +66,9 @@ class Tensor {
 
     Tensor contiguous() const;
 
+    // calculate operation
+    Tensor operator+(const Tensor& rhs) const;
+
    private:
     static std::vector<int64_t> default_strides(const Shape& shape);
     static void fill_ones_(void* data, int64_t numel, DType dtype);

@@ -256,4 +256,73 @@ Tensor Tensor::contiguous() const {
     }
     return new_tensor;
 }
+
+Tensor Tensor::operator+(const Tensor& rhs) const {
+    if (dtype_ != rhs.dtype_) {
+        throw std::runtime_error("DType Must be same.");
+    }
+    // not yet implement broadcasting. for now, only support element wise add.
+    if (shape_.dims() != rhs.shape_.dims()) {
+        throw std::runtime_error("Shape Must be same.");
+    }
+
+    Tensor out = zeros(shape_, dtype_, storage_->alloc_);
+    const std::size_t n = numel();
+
+    if (n == 0) return out;
+
+    // x + y = z
+    auto add_kernel = [&](auto* z, auto* x, auto* y) {
+        // Fast path
+        if (is_contiguous() && rhs.is_contiguous() && strides() == rhs.strides()) {
+            for (std::size_t i = 0; i < n; i++) {
+                z[i] = x[i] + y[i];
+            }
+            return;
+        }
+
+        const auto r = rank();
+        const auto& dims = shape_.dims();
+        const auto& xs = strides();
+        const auto& ys = rhs.strides();
+
+        for (std::size_t i = 0; i < n; i++) {
+            std::size_t rem = i;
+            std::size_t xo = 0;
+            std::size_t yo = 0;
+
+            for (std::int64_t d = static_cast<std::int64_t>(r) - 1; d >= 0; d--) {
+                const std::size_t dim = dims[d];
+                const std::size_t idx = rem % dim;
+
+                rem /= dim;
+                xo += idx * static_cast<std::size_t>((xs[d]));
+                yo += idx * static_cast<std::size_t>((ys[d]));
+            }
+            z[i] = x[xo] + y[yo];
+        }
+    };
+
+    switch (dtype_) {
+        case DType::f32: {
+            auto* z = static_cast<float*>(out.data());
+            auto* x = static_cast<const float*>(data());
+            auto* y = static_cast<const float*>(rhs.data());
+            add_kernel(z, x, y);
+            break;
+        }
+        case DType::i32: {
+            auto* z = static_cast<std::int32_t*>(out.data());
+            auto* x = static_cast<const std::int32_t*>(data());
+            auto* y = static_cast<const std::int32_t*>(rhs.data());
+            add_kernel(z, x, y);
+            break;
+        }
+        default:
+            throw std::runtime_error("add: unsupported dtype");
+    }
+
+    return out;
+}
+
 }  // namespace minidl
