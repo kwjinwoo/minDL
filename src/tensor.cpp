@@ -5,15 +5,16 @@
 #include <vector>
 
 #include "minidl/allocators/default.h"
+#include "minidl/indexing.h"
 
 namespace minidl {
 
-std::vector<int64_t> Tensor::default_strides(const Shape& shape) {
+std::vector<std::size_t> Tensor::default_strides(const Shape& shape) {
     // stride in element
     const auto dims = shape.dims();
     const int64_t n = static_cast<int64_t>(shape.rank());
 
-    std::vector<int64_t> strides;
+    std::vector<std::size_t> strides;
 
     if (n == 0) {
         // empty strides
@@ -29,7 +30,7 @@ std::vector<int64_t> Tensor::default_strides(const Shape& shape) {
     return strides;
 }
 
-void Tensor::fill_ones_(void* data, int64_t numel, DType dtype) {
+void Tensor::fill_ones_(void* data, size_t numel, DType dtype) {
     if (!data) return;
     switch (dtype) {
         case DType::f32: {
@@ -51,10 +52,10 @@ bool Tensor::is_contiguous() const noexcept {
     // 0 element is conventionally contiguous
     if (numel() == 0) return true;
 
-    int64_t expected = 1;
-    for (int64_t d = static_cast<int64_t>(rank()) - 1; d >= 0; d--) {
-        const int64_t dim = static_cast<int64_t>(shape_[d]);
-        const int64_t s = strides_[d];
+    std::int64_t expected = 1;
+    for (std::int64_t d = static_cast<std::int64_t>(rank()) - 1; d >= 0; d--) {
+        const int64_t dim = static_cast<std::int64_t>(shape_[d]);
+        const int64_t s = static_cast<std::int64_t>(strides_[d]);
 
         if (dim == 1) {
             continue;
@@ -202,7 +203,7 @@ Tensor Tensor::transpose(const std::initializer_list<std::size_t> axes_ilist) co
 
     Tensor new_tensor = *this;
     std::vector<std::size_t> new_shape(n);
-    std::vector<int64_t> new_strides(n);
+    std::vector<std::size_t> new_strides(n);
 
     for (std::size_t i = 0; i < n; ++i) {
         const std::size_t src = axes[i];
@@ -239,20 +240,14 @@ Tensor Tensor::contiguous() const {
 
     const auto& dims = shape_.dims();
     const auto& st = strides_;
-    const int64_t r = rank();
 
-    for (int64_t linear = 0; linear < numel(); linear++) {
-        int64_t rem = linear;
-        int64_t scr_elem_offset = 0;
-
-        for (int64_t d = r - 1; d >= 0; d--) {
-            const std::size_t dim = dims[d];
-            const std::size_t idx_d = rem % dim;
-
-            rem /= dim;
-            scr_elem_offset += idx_d * st[d];
-        }
-        std::memcpy(dst + linear * item, src + scr_elem_offset * item, item);
+    NdCounter counter(dims);
+    std::size_t dst_offset = 0;
+    while (counter.done()) {
+        auto src_offset = offset_elems(counter.idx, st) * item;
+        std::memcpy(dst + dst_offset, src + src_offset, item);
+        dst_offset += item;
+        counter.next();
     }
     return new_tensor;
 }
@@ -281,25 +276,16 @@ Tensor Tensor::operator+(const Tensor& rhs) const {
             return;
         }
 
-        const auto r = rank();
-        const auto& dims = shape_.dims();
+        NdCounter counter(shape_.dims());
         const auto& xs = strides();
         const auto& ys = rhs.strides();
+        std::size_t z_offset = 0;
+        for (; counter.done(); counter.next()) {
+            auto x_offset = offset_elems(counter.idx, xs);
+            auto y_offset = offset_elems(counter.idx, ys);
 
-        for (std::size_t i = 0; i < n; i++) {
-            std::size_t rem = i;
-            std::size_t xo = 0;
-            std::size_t yo = 0;
-
-            for (std::int64_t d = static_cast<std::int64_t>(r) - 1; d >= 0; d--) {
-                const std::size_t dim = dims[d];
-                const std::size_t idx = rem % dim;
-
-                rem /= dim;
-                xo += idx * static_cast<std::size_t>((xs[d]));
-                yo += idx * static_cast<std::size_t>((ys[d]));
-            }
-            z[i] = x[xo] + y[yo];
+            z[z_offset] = x[x_offset] + y[y_offset];
+            z_offset += 1;
         }
     };
 

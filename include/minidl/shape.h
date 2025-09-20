@@ -39,11 +39,6 @@ class Shape {
     }
 
    private:
-    void validate() const {
-        for (auto d : dims_) {
-            if (d < 0) throw std::invalid_argument("Shape: negative dimension not allowed");
-        }
-    }
     std::vector<std::size_t> dims_;
 };
 }  // namespace minidl

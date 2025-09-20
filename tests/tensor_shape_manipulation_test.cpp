@@ -21,7 +21,7 @@ TEST(ShapeManipulation, Permute2D) {
     Tensor a = Tensor::arange(6, DType::i32).view({2, 3});
     auto b = a.transpose({1, 0});
     EXPECT_EQ(b.shape().dims(), (std::vector<std::size_t>{3, 2}));
-    EXPECT_EQ(b.strides(), (std::vector<int64_t>{1, 3}));
+    EXPECT_EQ(b.strides(), (std::vector<std::size_t>{1, 3}));
     EXPECT_FALSE(b.is_contiguous());
 }
 
@@ -39,7 +39,7 @@ TEST(ShapeManipulation, ReshapeContiguous) {
 
     auto b = a.reshape({3, 2});
     EXPECT_EQ(b.shape().dims(), (std::vector<std::size_t>{3, 2}));
-    EXPECT_EQ(b.strides(), (std::vector<std::int64_t>{2, 1}));
+    EXPECT_EQ(b.strides(), (std::vector<std::size_t>{2, 1}));
     EXPECT_TRUE(b.is_contiguous());
 }
 
@@ -49,6 +49,6 @@ TEST(ShapeManipulation, ReshapeNonContiguous) {
 
     auto c = b.reshape({3, 2});
     EXPECT_EQ(c.shape().dims(), (std::vector<std::size_t>{3, 2}));
-    EXPECT_EQ(c.strides(), (std::vector<std::int64_t>{2, 1}));
+    EXPECT_EQ(c.strides(), (std::vector<std::size_t>{2, 1}));
     EXPECT_TRUE(c.is_contiguous());
 }

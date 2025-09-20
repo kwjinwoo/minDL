@@ -55,7 +55,7 @@ class Tensor {
     const Shape& shape() const noexcept { return shape_; }
     DType dtype() const noexcept { return dtype_; }
     const std::shared_ptr<Storage>& storage() const noexcept { return storage_; }
-    const std::vector<int64_t>& strides() const noexcept { return strides_; }
+    const std::vector<std::size_t>& strides() const noexcept { return strides_; }
     void* data() const noexcept { return storage_->data; }
 
     std::size_t numel() const noexcept { return shape_.numel(); }
@@ -70,13 +70,13 @@ class Tensor {
     Tensor operator+(const Tensor& rhs) const;
 
    private:
-    static std::vector<int64_t> default_strides(const Shape& shape);
-    static void fill_ones_(void* data, int64_t numel, DType dtype);
+    static std::vector<std::size_t> default_strides(const Shape& shape);
+    static void fill_ones_(void* data, std::size_t numel, DType dtype);
 
     Shape shape_;
     DType dtype_;
     std::shared_ptr<Storage> storage_;
-    std::vector<int64_t> strides_;
+    std::vector<std::size_t> strides_;
 };
 
 }  // namespace minidl
