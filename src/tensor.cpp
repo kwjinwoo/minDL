@@ -9,6 +9,50 @@
 
 namespace minidl {
 
+inline std::vector<std::size_t> compute_broadcast_shape(const std::vector<std::size_t>& a,
+                                                        const std::vector<std::size_t>& b) {
+    const std::int64_t ra = static_cast<std::int64_t>(a.size());
+    const std::int64_t rb = static_cast<std::int64_t>(b.size());
+    const std::int64_t r = std::max(ra, rb);
+
+    std::vector<std::size_t> out(r, 1);
+
+    for (std::int64_t i = 0; i < r; i++) {
+        const std::int64_t ai = ra - 1 - i >= 0 ? a[ra - 1 - i] : 1;
+        const std::int64_t bi = rb - 1 - i >= 0 ? b[rb - 1 - i] : 1;
+
+        if (ai == bi || ai == 1 || bi == 1) {
+            out[r - 1 - i] = static_cast<std::size_t>(std::max(ai, bi));
+        } else {
+            throw std::runtime_error("boradcast: incompatible shapes.");
+        }
+    }
+    return out;
+}
+
+inline std::vector<std::size_t> expand_strides_for_broadcast(const std::vector<std::size_t>& in_shapes,
+                                                             const std::vector<std::size_t>& in_strides,
+                                                             const std::vector<std::size_t>& out_shapes) {
+    const std::int64_t rin = static_cast<std::int64_t>(in_shapes.size());
+    const std::int64_t rout = static_cast<std::int64_t>(out_shapes.size());
+
+    std::vector<std::size_t> out_strides(rout, 0);
+
+    for (std::int64_t i = 0; i < rout; i++) {
+        const std::int64_t out_shape = out_shapes[rout - 1 - i];
+        const std::int64_t in_shape = rin - 1 - i >= 0 ? in_shapes[rin - 1 - i] : 1;
+        const std::size_t in_stride = rin - 1 - i >= 0 ? in_strides[rin - 1 - i] : 0;
+
+        if (out_shape == in_shape)
+            out_strides[rout - 1 - i] = in_stride;
+        else if (in_shape == 1)
+            out_strides[rout - 1 - i] = 0;
+        else
+            throw std::runtime_error("expand strides: incompatible shapes.");
+    }
+    return out_strides;
+}
+
 std::vector<std::size_t> Tensor::default_strides(const Shape& shape) {
     // stride in element
     const auto dims = shape.dims();
@@ -256,36 +300,33 @@ Tensor Tensor::operator+(const Tensor& rhs) const {
     if (dtype_ != rhs.dtype_) {
         throw std::runtime_error("DType Must be same.");
     }
-    // not yet implement broadcasting. for now, only support element wise add.
-    if (shape_.dims() != rhs.shape_.dims()) {
-        throw std::runtime_error("Shape Must be same.");
-    }
+    const auto out_shape = compute_broadcast_shape(shape_.dims(), rhs.shape_.dims());
 
-    Tensor out = zeros(shape_, dtype_, storage_->alloc_);
-    const std::size_t n = numel();
-
+    Tensor out = zeros(Shape(out_shape), dtype_, storage_->alloc_);
+    const std::size_t n = out.numel();
     if (n == 0) return out;
 
-    // x + y = z
     auto add_kernel = [&](auto* z, auto* x, auto* y) {
         // Fast path
-        if (is_contiguous() && rhs.is_contiguous() && strides() == rhs.strides()) {
+        if (shape_.dims() == rhs.shape_.dims() && is_contiguous() && rhs.is_contiguous() &&
+            strides() == rhs.strides()) {
             for (std::size_t i = 0; i < n; i++) {
                 z[i] = x[i] + y[i];
             }
             return;
         }
 
-        NdCounter counter(shape_.dims());
-        const auto& xs = strides();
-        const auto& ys = rhs.strides();
+        NdCounter counter(out_shape);
+        const auto& xs = expand_strides_for_broadcast(shape_.dims(), strides_, out_shape);
+        const auto& ys = expand_strides_for_broadcast(rhs.shape_.dims(), rhs.strides_, out_shape);
         std::size_t z_offset = 0;
-        for (; counter.done(); counter.next()) {
+
+        while (!counter.done()) {
             auto x_offset = offset_elems(counter.idx, xs);
             auto y_offset = offset_elems(counter.idx, ys);
-
             z[z_offset] = x[x_offset] + y[y_offset];
             z_offset += 1;
+            counter.next();
         }
     };
 

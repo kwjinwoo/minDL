@@ -32,3 +32,18 @@ TEST(TensorAddTest, BasicI32Add) {
         EXPECT_EQ(data[i], 2);
     }
 }
+
+TEST(TensoAddTest, BroadCastTest) {
+    Tensor a = Tensor::ones({1, 2}, DType::f32);
+    Tensor b = Tensor::ones({3, 1}, DType::f32);
+
+    Tensor c = a + b;
+
+    EXPECT_EQ(c.shape().dims()[0], 3);
+    EXPECT_EQ(c.shape().dims()[1], 2);
+
+    auto* data = static_cast<const float*>(c.data());
+    for (std::size_t i = 0; i < c.numel(); i++) {
+        EXPECT_FLOAT_EQ(data[i], 2.0f);
+    }
+}
