@@ -30,6 +30,17 @@ TEST(TensorFactorys, ZerosCreatesAllZeros) {
     expect_all_equal<float>(p, 6, 0.0f);
 }
 
+TEST(TensorFactorys, ZerosCreatesScalar) {
+    auto t = Tensor::zeros(Shape(), DType::f32);
+
+    EXPECT_EQ(t.numel(), 1);
+    EXPECT_EQ(t.shape().rank(), 0);
+    EXPECT_TRUE(t.is_contiguous());
+
+    auto* data = static_cast<const float*>(t.data());
+    EXPECT_FLOAT_EQ(data[0], 0.0f);
+}
+
 // ---------- ones ----------
 TEST(TensorFactorys, OnesCreatesAllOnes) {
     auto t = Tensor::ones({2, 3}, DType::f32);

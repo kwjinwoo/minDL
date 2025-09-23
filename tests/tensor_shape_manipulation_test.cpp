@@ -16,6 +16,14 @@ TEST(ShapeManipulation, ViewCreate) {
     EXPECT_EQ(v.strides()[1], 1);
 }
 
+TEST(ShapeManipulation, ViewScalar) {
+    auto t = Tensor::zeros(Shape(), DType::f32);
+    auto v = t.view({1});
+
+    EXPECT_EQ(v.shape()[0], 1);
+    EXPECT_EQ(v.strides()[0], 1);
+}
+
 // ---------- transpose ----------
 TEST(ShapeManipulation, Permute2D) {
     Tensor a = Tensor::arange(6, DType::i32).view({2, 3});

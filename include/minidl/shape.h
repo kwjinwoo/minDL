@@ -6,7 +6,7 @@
 namespace minidl {
 class Shape {
    public:
-    Shape() = default;
+    Shape() = default;  // scalar.
     explicit Shape(const std::vector<std::size_t>& dims) : dims_(dims) {}
     Shape(std::initializer_list<std::size_t> dims) : dims_(dims) {}
 

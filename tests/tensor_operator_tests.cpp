@@ -47,3 +47,18 @@ TEST(TensoAddTest, BroadCastTest) {
         EXPECT_FLOAT_EQ(data[i], 2.0f);
     }
 }
+
+TEST(TensorAddTest, ScalarAddTest) {
+    Tensor a = Tensor::ones(Shape(), DType::f32);
+    Tensor b = Tensor::zeros({2, 3}, DType::f32);
+
+    Tensor c = a + b;
+
+    EXPECT_EQ(c.shape().dims()[0], 2);
+    EXPECT_EQ(c.shape().dims()[1], 3);
+
+    auto* data = static_cast<const float*>(c.data());
+    for (std::size_t i = 0; i < c.numel(); i++) {
+        EXPECT_FLOAT_EQ(data[i], 1.0f);
+    }
+}
