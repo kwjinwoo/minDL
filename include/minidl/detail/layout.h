@@ -4,10 +4,6 @@
 
 namespace minidl::detail {
 
-inline std::vector<std::int64_t> default_strides_stub(const std::vector<std::size_t>& /*shape*/,
-                                                      std::size_t /*itemsize*/) {
-    // TODO
-    return {};
-}
-
+std::vector<std::size_t> default_strides(const std::vector<std::size_t>& /*shape*/);
+bool is_contiguous(const std::vector<std::size_t>& /*shape*/, const std::vector<std::size_t>& /*strides*/);
 }  // namespace minidl::detail

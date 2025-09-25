@@ -62,7 +62,11 @@ class Tensor {
     std::size_t itemsize() const noexcept { return size_of(dtype_); }
     std::size_t nbytes() const noexcept { return numel() * itemsize(); }
     std::size_t rank() const noexcept { return shape_.rank(); }
-    bool is_contiguous() const noexcept;
+    inline bool is_contiguous() const noexcept {
+        // 0 element is conventionally contiguous
+        if (numel() == 0) return true;
+        return detail::is_contiguous(shape_.dims(), strides());
+    }
 
     Tensor contiguous() const;
 
@@ -70,7 +74,10 @@ class Tensor {
     Tensor operator+(const Tensor& rhs) const;
 
    private:
-    static std::vector<std::size_t> default_strides(const Shape& shape);
+    static inline std::vector<std::size_t> default_strides(const Shape& shape) {
+        const auto dims = shape.dims();
+        return detail::default_strides(dims);
+    }
     static void fill_ones_(void* data, std::size_t numel, DType dtype);
 
     Shape shape_;

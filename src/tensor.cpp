@@ -53,27 +53,6 @@ inline std::vector<std::size_t> expand_strides_for_broadcast(const std::vector<s
     return out_strides;
 }
 
-std::vector<std::size_t> Tensor::default_strides(const Shape& shape) {
-    // stride in element
-    const auto dims = shape.dims();
-    const int64_t n = static_cast<int64_t>(shape.rank());
-
-    std::vector<std::size_t> strides;
-
-    if (n == 0) {
-        // empty strides
-        return strides;
-    }
-
-    strides.resize(n);
-    strides[n - 1] = 1;
-
-    for (int64_t i = n - 2; i >= 0; --i) {
-        strides[i] = strides[i + 1] * dims[i + 1];
-    }
-    return strides;
-}
-
 void Tensor::fill_ones_(void* data, size_t numel, DType dtype) {
     if (!data) return;
     switch (dtype) {
@@ -90,27 +69,6 @@ void Tensor::fill_ones_(void* data, size_t numel, DType dtype) {
         default:
             throw std::runtime_error("Unsupported DType in fill_ones");
     }
-}
-
-bool Tensor::is_contiguous() const noexcept {
-    // 0 element is conventionally contiguous
-    if (numel() == 0) return true;
-
-    std::int64_t expected = 1;
-    for (std::int64_t d = static_cast<std::int64_t>(rank()) - 1; d >= 0; d--) {
-        const int64_t dim = static_cast<std::int64_t>(shape_[d]);
-        const int64_t s = static_cast<std::int64_t>(strides_[d]);
-
-        if (dim == 1) {
-            continue;
-        }
-
-        if (s != expected) {
-            return false;
-        }
-        expected *= dim;
-    }
-    return true;
 }
 
 Tensor Tensor::zeros(const Shape& shape, DType dtype, std::shared_ptr<Allocator> alloc) {
