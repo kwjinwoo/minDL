@@ -1,22 +1,32 @@
 #pragma once
 #include <cstddef>
-#include <cstdint>
 #include <vector>
 
 namespace minidl::detail {
 
-struct NdCounterStub {
-    std::vector<std::int64_t> shape;
-    std::vector<std::int64_t> idx;
-    explicit NdCounterStub(std::vector<std::int64_t> s) : shape(std::move(s)), idx(shape.size(), 0) {}
-    bool done() const { return true; }  // TODO
-    void next() {}                      // TODO
+struct NdCounter {
+    std::vector<std::size_t> shape;
+    std::vector<std::size_t> idx;
+    bool finished = false;
+
+    explicit NdCounter(std::vector<std::size_t> s) : shape(std::move(s)), idx(shape.size(), 0) {
+        for (auto d : shape) {
+            if (d == 0) {
+                finished = true;
+                break;
+            }
+        }
+    }
+    bool done() const { return finished; }
+    void next();
 };
 
-inline std::int64_t offset_bytes_stub(const std::vector<std::int64_t>& /*idx*/,
-                                      const std::vector<std::int64_t>& /*stride*/, std::size_t /*itemsize*/) {
-    // TODO
-    return 0;
+inline std::size_t offset_elems(const std::vector<std::size_t>& idx, const std::vector<std::size_t>& stride) {
+    std::size_t offset = 0;
+    for (std::size_t i = 0; i < idx.size(); i++) {
+        offset += idx[i] * stride[i];
+    }
+    return offset;
 }
 
 }  // namespace minidl::detail

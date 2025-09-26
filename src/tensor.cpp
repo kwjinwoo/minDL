@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "minidl/allocators/default.h"
-#include "minidl/indexing.h"
+#include "minidl/detail/iter.h"
 
 namespace minidl {
 
@@ -243,10 +243,10 @@ Tensor Tensor::contiguous() const {
     const auto& dims = shape_.dims();
     const auto& st = strides_;
 
-    NdCounter counter(dims);
+    detail::NdCounter counter(dims);
     std::size_t dst_offset = 0;
     while (counter.done()) {
-        auto src_offset = offset_elems(counter.idx, st) * item;
+        auto src_offset = detail::offset_elems(counter.idx, st) * item;
         std::memcpy(dst + dst_offset, src + src_offset, item);
         dst_offset += item;
         counter.next();
@@ -274,14 +274,14 @@ Tensor Tensor::operator+(const Tensor& rhs) const {
             return;
         }
 
-        NdCounter counter(out_shape);
+        detail::NdCounter counter(out_shape);
         const auto& xs = expand_strides_for_broadcast(shape_.dims(), strides_, out_shape);
         const auto& ys = expand_strides_for_broadcast(rhs.shape_.dims(), rhs.strides_, out_shape);
         std::size_t z_offset = 0;
 
         while (!counter.done()) {
-            auto x_offset = offset_elems(counter.idx, xs);
-            auto y_offset = offset_elems(counter.idx, ys);
+            auto x_offset = detail::offset_elems(counter.idx, xs);
+            auto y_offset = detail::offset_elems(counter.idx, ys);
             z[z_offset] = x[x_offset] + y[y_offset];
             z_offset += 1;
             counter.next();
