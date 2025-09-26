@@ -1,4 +1,5 @@
 #pragma once
+#include <minidl/detail/layout.h>
 #include <minidl/dtype.h>
 #include <minidl/shape.h>
 
