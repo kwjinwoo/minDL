@@ -1,6 +1,7 @@
 #pragma once
 #include <minidl/detail/layout.h>
 #include <minidl/dtype.h>
+#include <minidl/ops.h>
 #include <minidl/shape.h>
 
 #include <cstdint>
@@ -71,9 +72,6 @@ class Tensor {
 
     Tensor contiguous() const;
 
-    // calculate operation
-    Tensor operator+(const Tensor& rhs) const;
-
    private:
     static inline std::vector<std::size_t> default_strides(const Shape& shape) {
         const auto dims = shape.dims();
@@ -86,5 +84,7 @@ class Tensor {
     std::shared_ptr<Storage> storage_;
     std::vector<std::size_t> strides_;
 };
+
+inline Tensor operator+(const Tensor& lhs, const Tensor& rhs) { return ops::add(lhs, rhs); }
 
 }  // namespace minidl

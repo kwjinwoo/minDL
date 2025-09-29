@@ -1,14 +1,8 @@
 #pragma once
-#include <cstddef>
-#include <vector>
+#include "minidl/tensor.h"
 
-namespace minidl {
+namespace minidl::ops {
 
-struct Tensor;
+Tensor add(const Tensor& /*lhs*/, const Tensor& /*rhs*/);
 
-namespace ops {
-
-void add_stub();
-
-}  // namespace ops
-}  // namespace minidl
+}  // namespace minidl::ops

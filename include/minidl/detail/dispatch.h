@@ -1,14 +1,18 @@
 #pragma once
-#include <cstdint>
-#include <type_traits>
+#include "minidl/dtype.h"
 
 namespace minidl::detail {
 
-template <typename F>
-inline void dispatch_f32_i32_stub(int /*fake_dtype*/, F&& f) {
-    // TODO
-    using T = float;
-    f.template operator()<T>();
+template <typename F32Fn, typename I32Fn>
+auto dispatch(DType dt, F32Fn&& f32_fn, I32Fn&& i32_fn) {
+    switch (dt) {
+        case DType::f32:
+            return f32_fn();
+        case DType::i32:
+            return i32_fn();
+        default:
+            throw std::runtime_error("unsupported dtype");
+    }
 }
 
 }  // namespace minidl::detail
