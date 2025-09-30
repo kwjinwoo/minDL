@@ -1,7 +1,6 @@
 #pragma once
 #include <minidl/detail/layout.h>
 #include <minidl/dtype.h>
-#include <minidl/ops.h>
 #include <minidl/shape.h>
 
 #include <cstdint>
@@ -32,9 +31,8 @@ class Tensor {
    public:
     // constructor and deleter
     Tensor() = delete;
-    Tensor(const Shape& shape, DType dtype, std::shared_ptr<Storage> storage)
-        : shape_(shape), dtype_(dtype), storage_(std::move(storage)) {}
-    ~Tensor() = default;
+    Tensor(const Shape& shape, DType dtype, std::shared_ptr<Storage> storage);
+    ~Tensor();
 
     // copy and move
     Tensor(const Tensor& tensor) = default;
@@ -84,7 +82,5 @@ class Tensor {
     std::shared_ptr<Storage> storage_;
     std::vector<std::size_t> strides_;
 };
-
-inline Tensor operator+(const Tensor& lhs, const Tensor& rhs) { return ops::add(lhs, rhs); }
 
 }  // namespace minidl
