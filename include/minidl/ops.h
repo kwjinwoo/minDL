@@ -4,5 +4,6 @@
 namespace minidl::ops {
 
 Tensor add(const Tensor& /*lhs*/, const Tensor& /*rhs*/);
+Tensor mul(const Tensor& /*lhs*/, const Tensor& /*rhs*/);
 
 }  // namespace minidl::ops
