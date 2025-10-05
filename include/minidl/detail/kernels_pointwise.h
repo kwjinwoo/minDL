@@ -6,7 +6,7 @@
 namespace minidl::kernels {
 
 template <typename T, class Op>
-inline void binary_contig(T* __restrict z, const T* __restrict x, const T* __restrict y, std::size_t n) noexcept {
+inline void binary_contig(T* __restrict z, const T* __restrict x, const T* __restrict y, std::size_t n) {
     for (std::size_t i = 0; i < n; ++i) {
         z[i] = Op::apply(x[i], y[i]);
     }
@@ -15,7 +15,7 @@ inline void binary_contig(T* __restrict z, const T* __restrict x, const T* __res
 template <typename T, class Op>
 inline void binary_same_shape_strided(T* __restrict z, const T* __restrict x, const T* __restrict y,
                                       const std::vector<std::size_t>& shape, const std::vector<std::size_t>& xs,
-                                      const std::vector<std::size_t>& ys) noexcept {
+                                      const std::vector<std::size_t>& ys) {
     minidl::detail::NdCounter it(shape);
     std::size_t zi = 0;
     while (!it.done()) {
@@ -29,7 +29,7 @@ inline void binary_same_shape_strided(T* __restrict z, const T* __restrict x, co
 template <typename T, class Op>
 inline void binary_broadcast(T* __restrict z, const T* __restrict x, const T* __restrict y,
                              const std::vector<std::size_t>& out_shape, const std::vector<std::size_t>& xs,
-                             const std::vector<std::size_t>& ys) noexcept {
+                             const std::vector<std::size_t>& ys) {
     minidl::detail::NdCounter it(out_shape);
     std::size_t zi = 0;
     while (!it.done()) {

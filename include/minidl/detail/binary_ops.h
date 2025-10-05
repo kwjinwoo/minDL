@@ -16,6 +16,24 @@ struct MulOp {
     static inline T apply(T a, T b) noexcept { return a * b; }
 };
 
+template <typename T>
+struct SubOp {
+    static inline T apply(T a, T b) noexcept { return a - b; }
+};
+
+template <typename T>
+struct DivOp {
+    static inline T apply(T a, T b) {
+        if constexpr (std::is_floating_point_v<T>) {
+            if (b == static_cast<T>(0)) return std::numeric_limits<T>::quiet_NaN();
+            return a / b;
+        } else if constexpr (std::is_integral_v<T>) {
+            if (b == 0) throw std::runtime_error("Div: Integer division by zero.");
+            return a / b;
+        }
+    }
+};
+
 // impl
 template <typename T, class Op>
 Tensor binary_impl(const Tensor& a, const Tensor& b) {

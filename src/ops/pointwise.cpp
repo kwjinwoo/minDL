@@ -18,4 +18,16 @@ Tensor mul(const Tensor& a, const Tensor& b) {
         [&] { return detail::binary_impl<int32_t, detail::MulOp<int32_t>>(a, b); });
 }
 
+Tensor sub(const Tensor& a, const Tensor& b) {
+    return detail::dispatch(
+        a.dtype(), [&] { return detail::binary_impl<float, detail::SubOp<float>>(a, b); },
+        [&] { return detail::binary_impl<int32_t, detail::SubOp<int32_t>>(a, b); });
+}
+
+Tensor div(const Tensor& a, const Tensor& b) {
+    return detail::dispatch(
+        a.dtype(), [&] { return detail::binary_impl<float, detail::DivOp<float>>(a, b); },
+        [&] { return detail::binary_impl<int32_t, detail::DivOp<int32_t>>(a, b); });
+}
+
 }  // namespace minidl::ops

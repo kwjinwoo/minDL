@@ -21,17 +21,51 @@ static inline Tensor ones_like_shape(const std::vector<std::size_t>& dims, DType
 using OpFn = Tensor (*)(const Tensor&, const Tensor&);
 static Tensor op_add(const Tensor& a, const Tensor& b) { return ops::add(a, b); }
 static Tensor op_mul(const Tensor& a, const Tensor& b) { return ops::mul(a, b); }
+static Tensor op_sub(const Tensor& a, const Tensor& b) { return ops::sub(a, b); }
+static Tensor op_div(const Tensor& a, const Tensor& b) { return ops::div(a, b); }
 
 struct Scenario {
     const char* name;
     std::function<std::pair<Tensor, Tensor>(DType)> make;
     std::vector<std::size_t> expected_shape;
-    // (add → 2, mul → 1)
+
     float expected_scalar_f32_add = 2.0f;
     float expected_scalar_f32_mul = 1.0f;
+    float expected_scalar_f32_sub = 0.0f;
+    float expected_scalar_f32_div = 1.0f;
     int32_t expected_scalar_i32_add = 2;
     int32_t expected_scalar_i32_mul = 1;
+    int32_t expected_scalar_i32_sub = 0;
+    int32_t expected_scalar_i32_div = 1;
 };
+
+static inline float get_f32_expected_value(const std::string& opname, const Scenario& sc) {
+    if (opname == std::string("add")) {
+        return sc.expected_scalar_f32_add;
+    } else if (opname == std::string("mul")) {
+        return sc.expected_scalar_f32_mul;
+    } else if (opname == std::string("sub")) {
+        return sc.expected_scalar_f32_sub;
+    } else if (opname == std::string("div")) {
+        return sc.expected_scalar_f32_div;
+    } else {
+        throw std::runtime_error("Not supported opname.");
+    }
+}
+
+static inline float get_i32_expected_value(const std::string& opname, const Scenario& sc) {
+    if (opname == std::string("add")) {
+        return sc.expected_scalar_i32_add;
+    } else if (opname == std::string("mul")) {
+        return sc.expected_scalar_i32_mul;
+    } else if (opname == std::string("sub")) {
+        return sc.expected_scalar_i32_sub;
+    } else if (opname == std::string("div")) {
+        return sc.expected_scalar_i32_div;
+    } else {
+        throw std::runtime_error("Not supported opname.");
+    }
+}
 
 static const Scenario SCENARIOS[] = {
     {"ContiguousSameShape",
@@ -103,7 +137,7 @@ TEST_P(PointwiseBinaryTest, Works) {
     EXPECT_TRUE(c.is_contiguous());
 
     if (dt == DType::f32) {
-        float ev = (opname == std::string("add")) ? sc.expected_scalar_f32_add : sc.expected_scalar_f32_mul;
+        float ev = get_f32_expected_value(opname, sc);
         expect_all_eq_f32(c, ev);
 
         const float* pa = static_cast<const float*>(a.data());
@@ -112,14 +146,14 @@ TEST_P(PointwiseBinaryTest, Works) {
             EXPECT_FLOAT_EQ(pa[i], pb[i]);
         }
     } else if (dt == DType::i32) {
-        int32_t ev = (opname == std::string("add")) ? sc.expected_scalar_i32_add : sc.expected_scalar_i32_mul;
+        int32_t ev = get_i32_expected_value(opname, sc);
         expect_all_eq_i32(c, ev);
     } else {
         FAIL() << "Unsupported dtype in param test";
     }
 }
 
-INSTANTIATE_TEST_SUITE_P(AddAndMul_All, PointwiseBinaryTest,
+INSTANTIATE_TEST_SUITE_P(BinaryOps_All, PointwiseBinaryTest,
                          ::testing::Values(
                              // add, f32
                              Param{&op_add, "add", DType::f32, 0}, Param{&op_add, "add", DType::f32, 1},
@@ -136,11 +170,46 @@ INSTANTIATE_TEST_SUITE_P(AddAndMul_All, PointwiseBinaryTest,
                              // mul, i32
                              Param{&op_mul, "mul", DType::i32, 0}, Param{&op_mul, "mul", DType::i32, 1},
                              Param{&op_mul, "mul", DType::i32, 2}, Param{&op_mul, "mul", DType::i32, 3},
-                             Param{&op_mul, "mul", DType::i32, 4}, Param{&op_mul, "mul", DType::i32, 5}));
+                             Param{&op_mul, "mul", DType::i32, 4}, Param{&op_mul, "mul", DType::i32, 5},
+                             // sub, f32
+                             Param{&op_sub, "sub", DType::f32, 0}, Param{&op_sub, "sub", DType::f32, 1},
+                             Param{&op_sub, "sub", DType::f32, 2}, Param{&op_sub, "sub", DType::f32, 3},
+                             Param{&op_sub, "sub", DType::f32, 4}, Param{&op_sub, "sub", DType::f32, 5},
+                             // sub, i32
+                             Param{&op_sub, "sub", DType::i32, 0}, Param{&op_sub, "sub", DType::i32, 1},
+                             Param{&op_sub, "sub", DType::i32, 2}, Param{&op_sub, "sub", DType::i32, 3},
+                             Param{&op_sub, "sub", DType::i32, 4}, Param{&op_sub, "sub", DType::i32, 5},
+                             // div, f32
+                             Param{&op_div, "div", DType::f32, 0}, Param{&op_div, "div", DType::f32, 1},
+                             Param{&op_div, "div", DType::f32, 2}, Param{&op_div, "div", DType::f32, 3},
+                             Param{&op_div, "div", DType::f32, 4}, Param{&op_div, "div", DType::f32, 5},
+                             // div, i32
+                             Param{&op_div, "div", DType::i32, 0}, Param{&op_div, "div", DType::i32, 1},
+                             Param{&op_div, "div", DType::i32, 2}, Param{&op_div, "div", DType::i32, 3},
+                             Param{&op_div, "div", DType::i32, 4}, Param{&op_div, "div", DType::i32, 5}));
 
 TEST(PointwiseBinaryNegative, BroadcastIncompatible) {
     auto a = Tensor::ones(Shape({2, 3}), DType::f32);
     auto b = Tensor::ones(Shape({4, 1}), DType::f32);
     EXPECT_THROW((void)ops::add(a, b), std::runtime_error);
     EXPECT_THROW((void)ops::mul(a, b), std::runtime_error);
+    EXPECT_THROW((void)ops::sub(a, b), std::runtime_error);
+    EXPECT_THROW((void)ops::div(a, b), std::runtime_error);
+}
+
+TEST(DivZeroDivision, ZeroDivisionF32) {
+    auto a = Tensor::ones(Shape({2, 3}), DType::f32);
+    auto b = Tensor::zeros(Shape({2, 3}), DType::f32);
+
+    auto c = ops::div(a, b);
+    const float* p = static_cast<const float*>(c.data());
+    std::vector<float> v(p, p + c.numel());
+    for (float x : v) EXPECT_TRUE(std::isnan(x));
+}
+
+TEST(DivZeroDivison, ZeroDivisionI32) {
+    auto a = Tensor::ones(Shape({2, 3}), DType::i32);
+    auto b = Tensor::zeros(Shape({2, 3}), DType::i32);
+
+    EXPECT_THROW((void)ops::div(a, b), std::runtime_error);
 }
