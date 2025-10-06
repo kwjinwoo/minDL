@@ -92,4 +92,16 @@ template void binary_broadcast<std::int32_t, detail::DivOp<float>>(std::int32_t*
                                                                    const std::vector<std::size_t>&,
                                                                    const std::vector<std::size_t>&);
 
+// relu
+template float relu_elem<float>(float) noexcept;
+template int32_t relu_elem<int32_t>(int32_t) noexcept;
+
+template void relu_contig<float>(float*, const float*, std::size_t) noexcept;
+template void relu_contig<int32_t>(int32_t*, const int32_t*, std::size_t) noexcept;
+
+template void relu_non_contig<float>(float*, const float*, const std::vector<std::size_t>&,
+                                     const std::vector<std::size_t>&) noexcept;
+template void relu_non_contig<int32_t>(int32_t*, const int32_t*, const std::vector<std::size_t>&,
+                                       const std::vector<std::size_t>&) noexcept;
+
 }  // namespace minidl::kernels
