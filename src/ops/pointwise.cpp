@@ -38,4 +38,14 @@ Tensor relu(const Tensor& tensor) {
         [&] { return detail::relu_impl<int32_t>(tensor); });
 }
 
+// sigmoid
+Tensor sigmoid(const Tensor& tensor) {
+    return detail::dispatch(
+        tensor.dtype(), [&] { return detail::sigmoid_impl<float>(tensor); },
+        [&] {
+            throw std::runtime_error("sigmoid: (TODO) Not yet implemented type propagation.");
+            return tensor;
+        });
+}
+
 }  // namespace minidl::ops

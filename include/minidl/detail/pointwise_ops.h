@@ -20,11 +20,32 @@ Tensor relu_impl(const Tensor& tensor) noexcept {
     }
 
     if (tensor.is_contiguous()) {
-        kernels::relu_contig(z, x, out.numel());
+        kernels::relu_contig<T>(z, x, n);
     } else {
-        kernels::relu_non_contig(z, x, out.shape().dims(), tensor.strides());
+        kernels::relu_non_contig<T>(z, x, out.shape().dims(), tensor.strides());
     }
 
+    return out;
+}
+
+template <typename T>
+Tensor sigmoid_impl(const Tensor& tensor) noexcept {
+    Tensor out = Tensor::zeros(tensor.shape(), tensor.dtype(), tensor.storage()->alloc_);
+
+    const std::size_t n = out.numel();
+
+    auto* z = static_cast<T*>(out.data());
+    auto* x = static_cast<T*>(tensor.data());
+
+    if (n == 0) {
+        z[0] = kernels::sigmoid_elem<T>(x[0]);
+    }
+
+    if (tensor.is_contiguous()) {
+        kernels::sigmoid_contig<T>(z, x, n);
+    } else {
+        kernels::sigmoid_non_contig<T>(z, x, out.shape().dims(), tensor.strides());
+    }
     return out;
 }
 }  // namespace minidl::detail

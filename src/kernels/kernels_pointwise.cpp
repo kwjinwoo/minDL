@@ -104,4 +104,12 @@ template void relu_non_contig<float>(float*, const float*, const std::vector<std
 template void relu_non_contig<int32_t>(int32_t*, const int32_t*, const std::vector<std::size_t>&,
                                        const std::vector<std::size_t>&) noexcept;
 
+// sigmoid
+template float sigmoid_elem<float>(float) noexcept;
+
+template void sigmoid_contig<float>(float*, const float*, std::size_t) noexcept;
+
+template void sigmoid_non_contig<float>(float*, const float*, const std::vector<std::size_t>&,
+                                        const std::vector<std::size_t>&) noexcept;
+
 }  // namespace minidl::kernels

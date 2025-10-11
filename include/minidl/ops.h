@@ -12,4 +12,7 @@ Tensor div(const Tensor& /*lhs*/, const Tensor& /*rhs*/);
 // relu
 Tensor relu(const Tensor& /*tensor*/);
 
+// sigmoid
+Tensor sigmoid(const Tensor& /*tensor*/);
+
 }  // namespace minidl::ops

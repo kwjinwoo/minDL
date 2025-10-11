@@ -87,3 +87,38 @@ TEST(ReluTest, ReluNonContig) {
         EXPECT_FLOAT_EQ(z[i], 0.0f);
     }
 }
+
+TEST(SigmoidTest, SigmoidF32) {
+    auto a = Tensor::ones(Shape({2, 3}), DType::f32);
+    const float ev = 1 / (1 + std::exp(-1));
+    auto out = ops::sigmoid(a);
+    auto* x = static_cast<float*>(out.data());
+
+    for (std::size_t i = 0; i < out.numel(); i++) {
+        EXPECT_FLOAT_EQ(x[i], ev);
+    }
+}
+
+TEST(SigmoidTest, SigmoidScalar) {
+    auto a = Tensor::ones(Shape({}), DType::f32);
+    const float ev = 1 / (1 + std::exp(-1));
+    auto out = ops::sigmoid(a);
+    auto* x = static_cast<float*>(out.data());
+
+    for (std::size_t i = 0; i < out.numel(); i++) {
+        EXPECT_FLOAT_EQ(x[i], ev);
+    }
+}
+
+TEST(SigmoidTest, SigmoidNonContig) {
+    auto a = Tensor::ones(Shape({2, 3}), DType::f32);
+    auto b = a.transpose({1, 0});
+
+    const float ev = 1 / (1 + std::exp(-1));
+    auto out = ops::sigmoid(b);
+    auto* x = static_cast<float*>(out.data());
+
+    for (std::size_t i = 0; i < out.numel(); i++) {
+        EXPECT_FLOAT_EQ(x[i], ev);
+    }
+}
