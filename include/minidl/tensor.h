@@ -58,6 +58,7 @@ class Tensor {
     const std::vector<std::size_t>& strides() const noexcept { return strides_; }
     void* data() const noexcept { return storage_->data; }
 
+    // utils
     std::size_t numel() const noexcept { return shape_.numel(); }
     std::size_t itemsize() const noexcept { return size_of(dtype_); }
     std::size_t nbytes() const noexcept { return numel() * itemsize(); }
@@ -67,8 +68,10 @@ class Tensor {
         if (numel() == 0) return true;
         return detail::is_contiguous(shape_.dims(), strides());
     }
-
     Tensor contiguous() const;
+
+    // to
+    void to(DType) noexcept;
 
    private:
     static inline std::vector<std::size_t> default_strides(const Shape& shape) {
