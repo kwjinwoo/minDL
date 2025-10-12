@@ -8,9 +8,11 @@ Tensor::Tensor(const Shape& shape, DType dtype, std::shared_ptr<Storage> storage
 Tensor::~Tensor() = default;
 
 // to
-void Tensor::to(DType d) noexcept {
-    if (d == dtype_) return;
-    dtype_ = d;
+Tensor Tensor::to(DType d) noexcept {
+    Tensor out = *this;
+    if (d == out.dtype_) return out;
+    out.dtype_ = d;
+    return out;
 }
 
 }  // namespace minidl
