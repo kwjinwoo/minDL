@@ -71,7 +71,7 @@ class Tensor {
     Tensor contiguous() const;
 
     // to
-    Tensor to(DType) noexcept;
+    Tensor to(DType);
 
    private:
     static inline std::vector<std::size_t> default_strides(const Shape& shape) {
