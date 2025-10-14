@@ -2,6 +2,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "minidl/dtype.h"
+
 namespace minidl::detail {
 
 struct NdCounter {
@@ -28,5 +30,24 @@ inline std::size_t offset_elems(const std::vector<std::size_t>& idx, const std::
     }
     return offset;
 }
+
+struct ElementReader {
+    const void* base_;
+    DType dtype_;
+
+    explicit ElementReader(void* base, DType dtype) : base_(base), dtype_(dtype) {}
+
+    template <typename T>
+    inline T read_as(std::size_t idx) const {
+        switch (dtype_) {
+            case DType::f32:
+                return static_cast<T>(static_cast<const float*>(base_)[idx]);
+            case DType::i32:
+                return static_cast<T>(static_cast<const int32_t*>(base_)[idx]);
+            default:
+                throw std::runtime_error("Element Reader: Unsupported Type.");
+        }
+    }
+};
 
 }  // namespace minidl::detail

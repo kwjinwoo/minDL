@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <minidl/detail/iter.h>
+#include <minidl/tensor.h>
 
 using namespace minidl;
 
@@ -146,4 +147,32 @@ TEST(OffsetElems, NonContiguousGeneral) {
     EXPECT_EQ(detail::offset_elems({2, 0}, strides), 2u);
     EXPECT_EQ(detail::offset_elems({0, 2}, strides), 6u);
     EXPECT_EQ(detail::offset_elems({2, 3}, strides), 11u);
+}
+
+TEST(ElemReader, F32DataReadasI32) {
+    auto a = Tensor::zeros(Shape({3}), DType::f32);
+    auto* x = static_cast<float*>(a.data());
+    x[0] = 1.0f;
+    x[1] = -2.8;
+    x[2] = -29.4;
+
+    detail::ElementReader ra(a.data(), a.dtype());
+
+    EXPECT_EQ(ra.read_as<int32_t>(0), 1);
+    EXPECT_EQ(ra.read_as<int32_t>(1), -2);
+    EXPECT_EQ(ra.read_as<int32_t>(2), -29);
+}
+
+TEST(ElemReader, I32DataReadasF32) {
+    auto a = Tensor::zeros(Shape({3}), DType::i32);
+    auto* x = static_cast<int32_t*>(a.data());
+    x[0] = 1;
+    x[1] = -3;
+    x[2] = 0;
+
+    detail::ElementReader ra(a.data(), a.dtype());
+
+    EXPECT_FLOAT_EQ(ra.read_as<float>(0), 1.0f);
+    EXPECT_FLOAT_EQ(ra.read_as<float>(1), -3.0f);
+    EXPECT_FLOAT_EQ(ra.read_as<float>(2), 0.0f);
 }
