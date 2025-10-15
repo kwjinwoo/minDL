@@ -36,11 +36,9 @@ struct DivOp {
 
 // impl
 template <typename T, class Op>
-Tensor binary_impl(const Tensor& a, const Tensor& b) {
-    if (a.dtype() != b.dtype()) throw std::runtime_error("binary_impl: dtype mismatch.");
-
+Tensor binary_impl(const Tensor& a, const Tensor& b, DType promoted_dtype) {
     const auto out_shape = detail::compute_broadcast_shape(a.shape().dims(), b.shape().dims());
-    Tensor out = Tensor::zeros(Shape(out_shape), a.dtype(), a.storage()->alloc_);
+    Tensor out = Tensor::zeros(Shape(out_shape), promoted_dtype, a.storage()->alloc_);
     const std::size_t n = out.numel();
     if (n == 0) return out;
 
@@ -52,16 +50,12 @@ Tensor binary_impl(const Tensor& a, const Tensor& b) {
     const bool cont_all = a.is_contiguous() && b.is_contiguous() && out.is_contiguous();
     const bool no_bcast = same_shape && same_strides;
 
-    auto* z = static_cast<T*>(out.data());
-    auto* x = static_cast<const T*>(a.data());
-    auto* y = static_cast<const T*>(b.data());
-
     if (cont_all && no_bcast) {
-        kernels::binary_contig<T, Op>(z, x, y, out.numel());
+        kernels::binary_contig<T, Op>(a, b, out, out.numel());
     } else if (no_bcast) {
-        kernels::binary_same_shape_strided<T, Op>(z, x, y, out_shape, a.strides(), b.strides());
+        kernels::binary_same_shape_strided<T, Op>(a, b, out, out_shape, a.strides(), b.strides());
     } else {
-        kernels::binary_broadcast<T, Op>(z, x, y, out_shape, xs, ys);
+        kernels::binary_broadcast<T, Op>(a, b, out, out_shape, xs, ys);
     }
     return out;
 }

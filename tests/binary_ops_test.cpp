@@ -213,3 +213,59 @@ TEST(DivZeroDivison, ZeroDivisionI32) {
 
     EXPECT_THROW((void)ops::div(a, b), std::runtime_error);
 }
+
+using TypePromotionParam = std::tuple<OpFn, const char*, DType, DType, DType>;
+
+class BinaryTypePromotionTest : public ::testing::TestWithParam<TypePromotionParam> {};
+
+TEST_P(BinaryTypePromotionTest, Works) {
+    OpFn op;
+    DType a_type, b_type, expected;
+    const char* opname;
+    std::tie(op, opname, a_type, b_type, expected) = GetParam();
+
+    Tensor a = Tensor::ones(Shape({2, 3}), a_type);
+    Tensor b = Tensor::ones(Shape({2, 3}), b_type);
+
+    Tensor c = op(a, b);
+
+    EXPECT_EQ(c.dtype(), expected);
+
+    if (expected == DType::f32) {
+        auto* z = static_cast<float*>(c.data());
+        for (std::size_t i = 0; i < c.numel(); i++) {
+            if (std::string(opname) == std::string("add")) {
+                EXPECT_FLOAT_EQ(z[i], 2.0f);
+            } else if (std::string(opname) == std::string("mul")) {
+                EXPECT_FLOAT_EQ(z[i], 1.0f);
+            } else if (std::string(opname) == std::string("sub")) {
+                EXPECT_FLOAT_EQ(z[i], 0.0f);
+            } else if (std::string(opname) == std::string("div")) {
+                EXPECT_FLOAT_EQ(z[i], 1.0f);
+            }
+        }
+    } else if (expected == DType::i32) {
+        auto* z = static_cast<int32_t*>(c.data());
+        for (std::size_t i = 0; i < c.numel(); i++) {
+            if (std::string(opname) == std::string("add")) {
+                EXPECT_EQ(z[i], 2);
+            } else if (std::string(opname) == std::string("mul")) {
+                EXPECT_EQ(z[i], 1);
+            } else if (std::string(opname) == std::string("sub")) {
+                EXPECT_EQ(z[i], 0);
+            } else if (std::string(opname) == std::string("div")) {
+                EXPECT_EQ(z[i], 1);
+            }
+        }
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(BinaryPromotion_All, BinaryTypePromotionTest,
+                         ::testing::Values(TypePromotionParam{&op_add, "add", DType::f32, DType::i32, DType::f32},
+                                           TypePromotionParam{&op_add, "add", DType::i32, DType::f32, DType::f32},
+                                           TypePromotionParam{&op_mul, "mul", DType::f32, DType::i32, DType::f32},
+                                           TypePromotionParam{&op_mul, "mul", DType::i32, DType::f32, DType::f32},
+                                           TypePromotionParam{&op_sub, "sub", DType::f32, DType::i32, DType::f32},
+                                           TypePromotionParam{&op_sub, "sub", DType::i32, DType::f32, DType::f32},
+                                           TypePromotionParam{&op_div, "div", DType::f32, DType::i32, DType::f32},
+                                           TypePromotionParam{&op_div, "div", DType::i32, DType::f32, DType::f32}));
