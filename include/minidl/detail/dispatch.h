@@ -1,4 +1,6 @@
 #pragma once
+#include <stdexcept>
+
 #include "minidl/dtype.h"
 
 namespace minidl::detail {

@@ -15,4 +15,6 @@ Tensor relu(const Tensor& /*tensor*/);
 // sigmoid
 Tensor sigmoid(const Tensor& /*tensor*/);
 
+// matmul
+Tensor matmul(const Tensor& /*lhs*/, const Tensor& /*rhs*/);
 }  // namespace minidl::ops
