@@ -4,13 +4,13 @@
 namespace minidl::detail {
 
 template <typename T>
-Tensor naive_2d_matmul(const Tensor& a, const Tensor& b, DType promoted_dtype) {
+Tensor gemm2d_native(const Tensor& a, const Tensor& b, DType promoted_dtype) {
     // rank check
-    if (a.rank() != 2 || b.rank() != 2) throw std::runtime_error("naive_2d_matmul: both inputs must be rank-2");
+    if (a.rank() != 2 || b.rank() != 2) throw std::runtime_error("gemm2d_native: both inputs must be rank-2");
 
     // check inner dims
     if (a.shape().dims()[1] != b.shape().dims()[0])
-        throw std::runtime_error("naive_2d_matmul: inner dims must match (a.shape[1] == b.shape[0])");
+        throw std::runtime_error("gemm2d_native: inner dims must match (a.shape[1] == b.shape[0])");
 
     const std::size_t M = a.shape().dims()[0];
     const std::size_t K = a.shape().dims()[1];
