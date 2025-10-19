@@ -8,8 +8,8 @@ namespace minidl::ops {
 Tensor matmul(const Tensor& a, const Tensor& b) {
     DType promoted_dtype = detail::promote_dtype(a.dtype(), b.dtype());
     return detail::dispatch(
-        promoted_dtype, [&] { return detail::gemm2d_native<float>(a, b, promoted_dtype); },
-        [&] { return detail::gemm2d_native<int32_t>(a, b, promoted_dtype); });
+        promoted_dtype, [&] { return detail::batched_gemm2d_native<float>(a, b, promoted_dtype); },
+        [&] { return detail::batched_gemm2d_native<int32_t>(a, b, promoted_dtype); });
 }
 
 }  // namespace minidl::ops

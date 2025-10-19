@@ -24,6 +24,8 @@ struct NdCounter {
 };
 
 inline std::size_t offset_elems(const std::vector<std::size_t>& idx, const std::vector<std::size_t>& stride) {
+    if (stride.empty()) return 0;
+
     std::size_t offset = 0;
     for (std::size_t i = 0; i < idx.size(); i++) {
         offset += idx[i] * stride[i];
