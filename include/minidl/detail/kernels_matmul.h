@@ -85,16 +85,21 @@ Tensor batched_gemm2d_native(const Tensor& a, const Tensor& b, DType promote_dty
     T* c_data = static_cast<T*>(c.data());
 
     // iter batch
-    NdCounter it(broadcast_batch_shape);
+    const std::size_t num_batches =
+        std::accumulate(broadcast_batch_shape.begin(), broadcast_batch_shape.end(), 1, std::multiplies<std::size_t>());
+    const Vec radix = compute_radix(broadcast_batch_shape);
 
-    while (!it.done()) {
-        const auto a_batch_offset = detail::offset_elems(it.idx, a_expanded_strides);
-        const auto b_batch_offset = detail::offset_elems(it.idx, b_expanded_strides);
-        const auto c_batch_offset = detail::offset_elems(it.idx, c_batch_strides);
+#pragma omp parallel for schedule(static)
+    for (std::int64_t blin = 0; blin < (std::int64_t)num_batches; ++blin) {
+        const auto a_batch_offset =
+            detail::linear_to_offset((std::size_t)blin, broadcast_batch_shape, radix, a_expanded_strides);
+        const auto b_batch_offset =
+            detail::linear_to_offset((std::size_t)blin, broadcast_batch_shape, radix, b_expanded_strides);
+        const auto c_batch_offset =
+            detail::linear_to_offset((std::size_t)blin, broadcast_batch_shape, radix, c_batch_strides);
 
         gemm2d_native<T>(a.data(), b.data(), c_data, M, N, K, a_gemm2d_strides, b_gemm2d_strides, c_gemm_strides,
                          a.dtype(), b.dtype(), a_batch_offset, b_batch_offset, c_batch_offset);
-        it.next();
     }
     return c;
 }

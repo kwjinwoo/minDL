@@ -176,3 +176,92 @@ TEST(ElemReader, I32DataReadasF32) {
     EXPECT_FLOAT_EQ(ra.read_as<float>(1), -3.0f);
     EXPECT_FLOAT_EQ(ra.read_as<float>(2), 0.0f);
 }
+
+TEST(ComputeRadix, EmptyShape) {
+    std::vector<std::size_t> shape;
+    auto radix = detail::compute_radix(shape);
+
+    EXPECT_TRUE(radix.empty());
+}
+
+TEST(ComputeRadix, SingleDim) {
+    std::vector<std::size_t> shape({6});
+    auto radix = detail::compute_radix(shape);
+
+    EXPECT_EQ(radix[0], 1);
+}
+
+TEST(ComputeRadix, RadixMultiDim) {
+    std::vector<std::size_t> shape({2, 3, 5});
+    auto radix = detail::compute_radix(shape);
+
+    EXPECT_EQ(radix[0], 15);
+    EXPECT_EQ(radix[1], 5);
+    EXPECT_EQ(radix[2], 1);
+}
+
+static std::vector<std::size_t> ref_unravel(std::size_t blin, const std::vector<std::size_t>& shape,
+                                            const std::vector<std::size_t>& radix) {
+    const std::size_t r = shape.size();
+    std::vector<std::size_t> idx(r, 0);
+    for (std::size_t d = 0; d < r; ++d) {
+        const std::size_t base = radix[d];  // base는 0 아님 (r>0이면 마지막은 1)
+        idx[d] = (base ? (blin / base) : 0) % (shape[d] ? shape[d] : 1);
+    }
+    return idx;
+}
+
+// num_batches = product(shape)
+static std::size_t num_batches(const std::vector<std::size_t>& shape) {
+    return std::accumulate(shape.begin(), shape.end(), std::size_t{1}, std::multiplies<std::size_t>());
+}
+
+TEST(LinearToOffset, EmptyShapeIsZero) {
+    std::vector<std::size_t> shape{};
+    std::vector<std::size_t> strides{};
+    auto rad = detail::compute_radix(shape);
+    EXPECT_EQ(detail::linear_to_offset(0, shape, rad, strides), 0);
+}
+
+TEST(LinearToOffset, NoBroadcast_RowMajor2D) {
+    // shape: [2,3], row-major strides: [3,1]
+    std::vector<std::size_t> shape{2, 3};
+    std::vector<std::size_t> strides{3, 1};
+    auto rad = detail::compute_radix(shape);
+    const auto nb = num_batches(shape);
+
+    for (std::size_t blin = 0; blin < nb; ++blin) {
+        auto idx = ref_unravel(blin, shape, rad);
+        auto expected = detail::offset_elems(idx, strides);
+        auto got = detail::linear_to_offset(blin, shape, rad, strides);
+        EXPECT_EQ(got, expected) << "blin=" << blin;
+    }
+}
+
+TEST(LinearToOffset, WithBroadcastZeroStride) {
+    std::vector<std::size_t> shape{2, 1, 4};
+    std::vector<std::size_t> strides{4, 0, 1};
+    auto rad = detail::compute_radix(shape);
+    const auto nb = num_batches(shape);
+
+    for (std::size_t blin = 0; blin < nb; ++blin) {
+        auto idx = ref_unravel(blin, shape, rad);
+        auto expected = detail::offset_elems(idx, strides);
+        auto got = detail::linear_to_offset(blin, shape, rad, strides);
+        EXPECT_EQ(got, expected) << "blin=" << blin;
+    }
+}
+
+TEST(LinearToOffset, RandomSmall3DLike) {
+    std::vector<std::size_t> shape{3, 2, 2};
+    std::vector<std::size_t> strides{4, 2, 1};
+    auto rad = detail::compute_radix(shape);
+    const auto nb = num_batches(shape);
+
+    for (std::size_t blin = 0; blin < nb; ++blin) {
+        auto idx = ref_unravel(blin, shape, rad);
+        auto expected = detail::offset_elems(idx, strides);
+        auto got = detail::linear_to_offset(blin, shape, rad, strides);
+        EXPECT_EQ(got, expected) << "blin=" << blin;
+    }
+}

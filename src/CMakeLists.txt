@@ -1,5 +1,7 @@
 set(MINIDL_PUBLIC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 
+find_package(OpenMP REQUIRED)
+
 # 1) minidl_core
 add_library(minidl_core STATIC
     tensor/tensor_core.cpp
@@ -29,8 +31,7 @@ target_include_directories(minidl_ops
 )
 
 target_link_libraries(minidl_ops
-    PUBLIC
-        minidl_core
+  PUBLIC  minidl_core OpenMP::OpenMP_CXX
 )
 
 set_target_properties(minidl_ops PROPERTIES
