@@ -23,6 +23,61 @@ inline Vec get_output_shape(const Vec& broadcast_batch_shape, const std::size_t 
     return out;
 }
 
+// suppose to use multi thread paralle outter for batch size.
+void gemm2d_simd(const float* __restrict x, const float* __restrict y, float* __restrict z, const std::size_t M,
+                 const std::size_t K, const std::size_t N) {
+    constexpr int VL = 8;  // vector lane size
+
+    for (std::size_t i = 0; i < M; i++) {
+        float* __restrict z_row = z + i * N;
+        const float* __restrict x_row = x + i * K;
+
+        std::size_t n = 0;  // step toward vector lane size
+        for (; n + VL <= N; n += VL) {
+            // initailize vacc
+            alignas(32) float vacc[VL] = {0.0f};
+
+            for (std::size_t k = 0; k < K; k++) {
+                const float* __restrict y_ptr = y + n + k * N;
+                const float x_ik = x_row[k];
+
+                // clang-format off
+                #pragma omp simd
+                // clang-format on
+                for (int l = 0; l < VL; l++) {
+                    vacc[l] += x_ik * y_ptr[l];
+                }
+            }
+            // clang-format off
+            #pragma omp simd
+            // clang-format on
+            for (int l = 0; l < VL; l++) z_row[n + l] = vacc[l];
+        }
+
+        if (n < N) {
+            const int TAIL = static_cast<int>(N - n);
+            alignas(32) float vacc[VL] = {0.0f};
+
+            for (size_t k = 0; k < K; ++k) {
+                const float a_ik = x_row[k];
+                const float* __restrict y_ptr = y + k * N + n;
+
+                // clang-format off
+                #pragma omp simd
+                // clang-format on
+                for (int l = 0; l < TAIL; ++l) {
+                    vacc[l] += a_ik * y_ptr[l];
+                }
+            }
+
+            // clang-format off
+            #pragma omp simd
+            // clang-format on
+            for (int l = 0; l < TAIL; ++l) z_row[n + l] = vacc[l];
+        }
+    }
+}
+
 template <typename T>
 void gemm2d_native(void* __restrict x, void* __restrict y, T* z, const std::size_t M, const std::size_t N,
                    const std::size_t K, const Vec& astr, const Vec& bstr, const Vec& cstr, DType x_dtype, DType y_dtype,
@@ -89,7 +144,12 @@ Tensor batched_gemm2d_native(const Tensor& a, const Tensor& b, DType promote_dty
         std::accumulate(broadcast_batch_shape.begin(), broadcast_batch_shape.end(), 1, std::multiplies<std::size_t>());
     const Vec radix = compute_radix(broadcast_batch_shape);
 
-#pragma omp parallel for schedule(static)
+    const bool inputs_f32_and_contig =
+        a.dtype() == DType::f32 && b.dtype() == DType::f32 && a.is_contiguous() && b.is_contiguous();
+
+    // clang-format off
+    #pragma omp parallel for schedule(static)
+    // clang-format on
     for (std::int64_t blin = 0; blin < (std::int64_t)num_batches; ++blin) {
         const auto a_batch_offset =
             detail::linear_to_offset((std::size_t)blin, broadcast_batch_shape, radix, a_expanded_strides);
@@ -98,8 +158,20 @@ Tensor batched_gemm2d_native(const Tensor& a, const Tensor& b, DType promote_dty
         const auto c_batch_offset =
             detail::linear_to_offset((std::size_t)blin, broadcast_batch_shape, radix, c_batch_strides);
 
-        gemm2d_native<T>(a.data(), b.data(), c_data, M, N, K, a_gemm2d_strides, b_gemm2d_strides, c_gemm_strides,
-                         a.dtype(), b.dtype(), a_batch_offset, b_batch_offset, c_batch_offset);
+        if constexpr (std::is_same_v<T, float>) {
+            if (inputs_f32_and_contig) {
+                const float* a_data = static_cast<const float*>(a.data());
+                const float* b_data = static_cast<const float*>(b.data());
+                float* c_data_f = static_cast<float*>(c.data());
+                gemm2d_simd(a_data + a_batch_offset, b_data + b_batch_offset, c_data_f + c_batch_offset, M, K, N);
+            } else {
+                gemm2d_native<T>(a.data(), b.data(), c_data, M, N, K, a_gemm2d_strides, b_gemm2d_strides,
+                                 c_gemm_strides, a.dtype(), b.dtype(), a_batch_offset, b_batch_offset, c_batch_offset);
+            }
+        } else {
+            gemm2d_native<T>(a.data(), b.data(), c_data, M, N, K, a_gemm2d_strides, b_gemm2d_strides, c_gemm_strides,
+                             a.dtype(), b.dtype(), a_batch_offset, b_batch_offset, c_batch_offset);
+        }
     }
     return c;
 }
