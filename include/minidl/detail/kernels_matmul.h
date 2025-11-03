@@ -1,4 +1,5 @@
 #include "minidl/detail/broadcasting.h"
+#include "minidl/detail/config.h"
 #include "minidl/detail/dispatch.h"
 #include "minidl/detail/iter.h"
 #include "minidl/tensor.h"
@@ -146,6 +147,9 @@ Tensor batched_gemm2d_native(const Tensor& a, const Tensor& b, DType promote_dty
 
     const bool inputs_f32_and_contig =
         a.dtype() == DType::f32 && b.dtype() == DType::f32 && a.is_contiguous() && b.is_contiguous();
+    const auto backend = detail::g_matmul_backend.load(std::memory_order_relaxed);
+    const bool use_simd =
+        (backend == MatmulBackend::ForceSIMD) || (backend == MatmulBackend::Auto && inputs_f32_and_contig);
 
     // clang-format off
     #pragma omp parallel for schedule(static)
@@ -159,7 +163,7 @@ Tensor batched_gemm2d_native(const Tensor& a, const Tensor& b, DType promote_dty
             detail::linear_to_offset((std::size_t)blin, broadcast_batch_shape, radix, c_batch_strides);
 
         if constexpr (std::is_same_v<T, float>) {
-            if (inputs_f32_and_contig) {
+            if (use_simd) {
                 const float* a_data = static_cast<const float*>(a.data());
                 const float* b_data = static_cast<const float*>(b.data());
                 float* c_data_f = static_cast<float*>(c.data());

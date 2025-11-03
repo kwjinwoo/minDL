@@ -7,6 +7,7 @@ add_library(minidl_core STATIC
     tensor/tensor_view.cpp
     detail/layout.cpp
     detail/iter.cpp
+    detail/config.cpp
 )
 
 target_include_directories(minidl_core
