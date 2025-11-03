@@ -83,14 +83,6 @@ int main(int argc, char** argv) {
     bool check = arg_flag("--check", argc, argv);
     bool verbose = arg_flag("--verbose", argc, argv);
 
-    const char* backend = arg_str("--backend", argc, argv, "auto");  // auto|simd|native
-
-#if defined(_WIN32)
-    _putenv_s("MINIDL_MATMUL_BACKEND", backend);
-#else
-    setenv("MINIDL_MATMUL_BACKEND", backend, 1);
-#endif
-
     int threads = static_cast<int>(arg_i("--threads", argc, argv,
 #ifdef _OPENMP
                                          omp_get_max_threads()
@@ -104,7 +96,7 @@ int main(int argc, char** argv) {
 
     std::cout << "[miniDL GEMM bench]\n";
     std::cout << "B=" << Bn << " M=" << M << " K=" << K << " N=" << N << "  warmup=" << warmup << " iters=" << iters
-              << "  dtype=f32  threads=" << threads << "  backend=" << backend << "\n";
+              << "  dtype=f32  threads=" << threads << "\n";
 
     // Shapes: A[B,M,K], B[B,K,N]
     Tensor A = Tensor::zeros(Shape({Bn, M, K}), DType::f32);
