@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
     bool verbose = arg_flag("--verbose", argc, argv);
 
     const char* backend = arg_str("--backend", argc, argv, "auto");  // auto|simd|native
-    // 환경변수로 넘겨서(있다면) 내부 토글이 이를 읽게 함. (토글 미구현 시 무해)
+
 #if defined(_WIN32)
     _putenv_s("MINIDL_MATMUL_BACKEND", backend);
 #else
