@@ -1,0 +1,9 @@
+backend,B,M,K,N,threads,gflops,best,avg,gflops_avg,source
+native,16,64,64,64,8,0.66,0.012722,0.01389,0.6,./bench_native.log
+native,16,128,128,128,8,0.68,0.098102,0.109379,0.61,./bench_native.log
+native,16,256,256,256,8,0.63,0.857676,0.887535,0.6,./bench_native.log
+native,16,512,512,512,8,0.46,9.264169,10.660575,0.4,./bench_native.log
+simd,16,64,64,64,8,3.09,0.002712,0.003116,2.69,./bench_simd.log
+simd,16,128,128,128,8,3.15,0.021288,0.021853,3.07,./bench_simd.log
+simd,16,256,256,256,8,2.47,0.217697,0.225839,2.38,./bench_simd.log
+simd,16,512,512,512,8,2.28,1.880563,1.995258,2.15,./bench_simd.log
