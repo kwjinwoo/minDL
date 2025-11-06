@@ -47,3 +47,5 @@ Hardware Overview:
 ![GEMM Performance image](./plots/gemm_bar.png)
 * GEMM Scaling by Size (threads=8)
 ![GEMM Scaling](./plots/gemm_line.png)
+* Speedup over `native` (theads=8)
+![Speedup](./plots/gemm_speedup.png)
