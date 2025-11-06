@@ -10,7 +10,7 @@ for SIZE in 64 128 256 512; do
   for BACKEND in native simd; do
     echo "[backend=$BACKEND]" | tee -a $OUTDIR/bench_${BACKEND}.log
     MINIDL_MATMUL_BACKEND=$BACKEND \
-      ./bin/bench_gemm --M $SIZE --K $SIZE --N $SIZE --threads 8 \
+      ./build/bin/bench_gemm --M $SIZE --K $SIZE --N $SIZE --threads 8 \
       | tee -a $OUTDIR/bench_${BACKEND}.log
   done
 done
