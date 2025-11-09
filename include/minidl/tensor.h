@@ -11,6 +11,7 @@ namespace minidl {
 
 // forward declaration.
 class Allocator;
+struct GradFn;
 
 struct Storage {
     Storage() = default;
@@ -31,7 +32,7 @@ class Tensor {
    public:
     // constructor and deleter
     Tensor() = delete;
-    Tensor(const Shape& shape, DType dtype, std::shared_ptr<Storage> storage);
+    Tensor(const Shape& shape, DType dtype, std::shared_ptr<Storage> storage, bool reqires_grad = false);
     ~Tensor();
 
     // copy and move
@@ -83,6 +84,10 @@ class Tensor {
     Shape shape_;
     DType dtype_;
     std::shared_ptr<Storage> storage_;
+
+    bool reqireds_grad_;
+    std::shared_ptr<Tensor> grad_;
+    std::shared_ptr<GradFn> grad_fn_;
     std::vector<std::size_t> strides_;
 };
 
