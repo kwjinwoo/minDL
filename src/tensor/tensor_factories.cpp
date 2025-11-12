@@ -21,11 +21,11 @@ void Tensor::fill_ones_(void* data, size_t numel, DType dtype) {
     }
 }
 
-Tensor Tensor::zeros(const Shape& shape, DType dtype, std::shared_ptr<Allocator> alloc) {
+Tensor Tensor::zeros(const Shape& shape, DType dtype, std::shared_ptr<Allocator> alloc, bool reqires_grad) {
     if (alloc == nullptr) alloc = get_default_allocator();
     auto storage = std::make_shared<Storage>(alloc);
 
-    Tensor t(shape, dtype, storage);
+    Tensor t(shape, dtype, storage, reqires_grad);
     t.strides_ = t.default_strides(shape);
 
     t.storage_->nbytes = t.numel() * t.itemsize();
@@ -41,11 +41,11 @@ Tensor Tensor::zeros(const Shape& shape, DType dtype, std::shared_ptr<Allocator>
     return t;
 }
 
-Tensor Tensor::ones(const Shape& shape, DType dtype, std::shared_ptr<Allocator> alloc) {
+Tensor Tensor::ones(const Shape& shape, DType dtype, std::shared_ptr<Allocator> alloc, bool reqires_grad) {
     if (alloc == nullptr) alloc = get_default_allocator();
     auto storage = std::make_shared<Storage>(alloc);
 
-    Tensor t(shape, dtype, storage);
+    Tensor t(shape, dtype, storage, reqires_grad);
     t.strides_ = t.default_strides(shape);
 
     t.storage_->nbytes = t.numel() * t.itemsize();
@@ -61,12 +61,12 @@ Tensor Tensor::ones(const Shape& shape, DType dtype, std::shared_ptr<Allocator> 
     return t;
 }
 
-Tensor Tensor::arange(std::size_t size, DType dtype, std::shared_ptr<Allocator> alloc) {
+Tensor Tensor::arange(std::size_t size, DType dtype, std::shared_ptr<Allocator> alloc, bool reqires_grad) {
     if (alloc == nullptr) alloc = get_default_allocator();
     auto storage = std::make_shared<Storage>(alloc);
 
     Shape s({size});
-    Tensor t(s, dtype, storage);
+    Tensor t(s, dtype, storage, reqires_grad);
     t.strides_ = t.default_strides(s);
 
     t.storage_->nbytes = t.numel() * t.itemsize();

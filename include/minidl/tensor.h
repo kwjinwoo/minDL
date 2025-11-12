@@ -43,9 +43,12 @@ class Tensor {
 
     // factory methods
     // static Tensor randn(const Shape& s, DType d = DType::f32, std::shared_ptr<Allocator> alloc = nullptr);
-    static Tensor zeros(const Shape& shape, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr);
-    static Tensor ones(const Shape& shape, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr);
-    static Tensor arange(std::size_t size, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr);
+    static Tensor zeros(const Shape& shape, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr,
+                        bool reqires_grad = false);
+    static Tensor ones(const Shape& shape, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr,
+                       bool reqires_grad = false);
+    static Tensor arange(std::size_t size, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr,
+                         bool reqires_grad = false);
 
     // view & reshape
     Tensor view(const Shape& new_shape) const;
@@ -58,6 +61,12 @@ class Tensor {
     const std::shared_ptr<Storage>& storage() const noexcept { return storage_; }
     const std::vector<std::size_t>& strides() const noexcept { return strides_; }
     void* data() const noexcept { return storage_->data; }
+    bool reqires_grad() const noexcept { return reqires_grad_; }
+
+    std::shared_ptr<Tensor>& grad() { return grad_; }
+    const std::shared_ptr<Tensor>& grad() const { return grad_; }
+    std::shared_ptr<GradFn>& grad_fn() { return grad_fn_; }
+    const std::shared_ptr<GradFn>& grad_fn() const { return grad_fn_; }
 
     // utils
     std::size_t numel() const noexcept { return shape_.numel(); }
@@ -85,7 +94,7 @@ class Tensor {
     DType dtype_;
     std::shared_ptr<Storage> storage_;
 
-    bool reqireds_grad_;
+    bool reqires_grad_;
     std::shared_ptr<Tensor> grad_;
     std::shared_ptr<GradFn> grad_fn_;
     std::vector<std::size_t> strides_;
