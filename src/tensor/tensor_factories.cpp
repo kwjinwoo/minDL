@@ -100,4 +100,24 @@ Tensor Tensor::arange(std::size_t size, DType dtype, std::shared_ptr<Allocator> 
     return t;
 }
 
+Tensor Tensor::ones_like(const Tensor& t, std::shared_ptr<Allocator> alloc, bool reqires_grad) {
+    if (alloc == nullptr) alloc = get_default_allocator();
+    auto storage = std::make_shared<Storage>(alloc);
+
+    Tensor out(t.shape(), t.dtype(), storage, reqires_grad);
+    out.strides_ = out.default_strides(out.shape());
+
+    out.storage_->nbytes = out.numel() * out.itemsize();
+
+    if (out.nbytes() == 0) {
+        out.storage_->data = nullptr;
+        return out;
+    }
+    out.storage_->data = out.storage_->alloc_->allocate(out.nbytes());
+    if (!out.data()) throw std::bad_alloc{};
+
+    out.fill_ones_(out.data(), out.numel(), out.dtype());
+    return out;
+}
+
 }  // namespace minidl

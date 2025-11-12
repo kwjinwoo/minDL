@@ -49,6 +49,7 @@ class Tensor {
                        bool reqires_grad = false);
     static Tensor arange(std::size_t size, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr,
                          bool reqires_grad = false);
+    static Tensor ones_like(const Tensor& t, std::shared_ptr<Allocator> alloc = nullptr, bool reqires_grad = false);
 
     // view & reshape
     Tensor view(const Shape& new_shape) const;

@@ -105,3 +105,11 @@ TEST(Arange, I32Arange) {
     ASSERT_NE(p, nullptr);
     for (int i = 0; i < 5; ++i) EXPECT_EQ(p[i], i);
 }
+
+TEST(OnesLike, CreateF32OnesLike) {
+    auto t = Tensor::arange(6, DType::f32).view({2, 3});
+    auto ones = Tensor::ones_like(t);
+    EXPECT_EQ(ones.dtype(), DType::f32);
+    auto* p = static_cast<const float*>(ones.data());
+    for (int i = 0; i < 6; i++) EXPECT_FLOAT_EQ(p[i], 1);
+}
