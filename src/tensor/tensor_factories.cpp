@@ -120,4 +120,25 @@ Tensor Tensor::ones_like(const Tensor& t, std::shared_ptr<Allocator> alloc, bool
     return out;
 }
 
+Tensor Tensor::from_scalar(float s, std::shared_ptr<Allocator> alloc, bool reqires_grad) {
+    if (alloc == nullptr) alloc = get_default_allocator();
+    auto storage = std::make_shared<Storage>(alloc);
+
+    Tensor t(Shape(), DType::f32, storage, reqires_grad);
+    t.strides_ = t.default_strides(t.shape());
+
+    t.storage_->nbytes = t.numel() * t.itemsize();
+
+    if (t.nbytes() == 0) {
+        t.storage_->data = nullptr;
+        return t;
+    }
+
+    t.storage_->data = t.storage_->alloc_->allocate(t.nbytes());
+    if (!t.data()) throw std::bad_alloc{};
+
+    auto* x = static_cast<float*>(t.data());
+    x[0] = s;
+    return t;
+}
 }  // namespace minidl

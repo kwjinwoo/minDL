@@ -113,3 +113,12 @@ TEST(OnesLike, CreateF32OnesLike) {
     auto* p = static_cast<const float*>(ones.data());
     for (int i = 0; i < 6; i++) EXPECT_FLOAT_EQ(p[i], 1);
 }
+
+TEST(FromScalar, CreateF32Scalar) {
+    float s = 2.0f;
+
+    auto t = Tensor::from_scalar(s);
+
+    auto* p = static_cast<const float*>(t.data());
+    EXPECT_FLOAT_EQ(p[0], 2.0f);
+}
