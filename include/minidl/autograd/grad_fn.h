@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 
+#include "minidl/ops.h"
 #include "minidl/tensor.h"
 
 namespace minidl {
@@ -24,8 +25,19 @@ struct AddBackward : public GradFn {
         auto a = inputs_[0].lock();
         auto b = inputs_[1].lock();
 
-        if (a && a->reqires_grad()) a->grad() = std::make_shared<Tensor>(out_grad);
-        if (b && b->reqires_grad()) b->grad() = std::make_shared<Tensor>(out_grad);
+        if (a && a->requires_grad()) a->grad() = std::make_shared<Tensor>(out_grad);
+        if (b && b->requires_grad()) b->grad() = std::make_shared<Tensor>(out_grad);
+    }
+};
+
+struct MulBackward : public GradFn {
+    MulBackward() : GradFn("MulBackward") {}
+    void backward(const Tensor& out_grad) override {
+        auto a = inputs_[0].lock();
+        auto b = inputs_[1].lock();
+
+        if (a && a->requires_grad() && b) a->grad() = std::make_shared<Tensor>(ops::mul(out_grad, *b));
+        if (b && b->requires_grad() && a) b->grad() = std::make_shared<Tensor>(ops::mul(out_grad, *a));
     }
 };
 

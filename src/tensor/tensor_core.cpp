@@ -6,8 +6,8 @@
 namespace minidl {
 
 // constructor and deleter
-Tensor::Tensor(const Shape& shape, DType dtype, std::shared_ptr<Storage> storage, bool reqires_grad)
-    : shape_(shape), dtype_(dtype), storage_(std::move(storage)), reqires_grad_(reqires_grad) {}
+Tensor::Tensor(const Shape& shape, DType dtype, std::shared_ptr<Storage> storage, bool requires_grad)
+    : shape_(shape), dtype_(dtype), storage_(std::move(storage)), requires_grad_(requires_grad) {}
 Tensor::~Tensor() = default;
 
 // to helpers

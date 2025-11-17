@@ -32,7 +32,7 @@ class Tensor {
    public:
     // constructor and deleter
     Tensor() = delete;
-    Tensor(const Shape& shape, DType dtype, std::shared_ptr<Storage> storage, bool reqires_grad = false);
+    Tensor(const Shape& shape, DType dtype, std::shared_ptr<Storage> storage, bool requires_grad = false);
     ~Tensor();
 
     // copy and move
@@ -44,13 +44,13 @@ class Tensor {
     // factory methods
     // static Tensor randn(const Shape& s, DType d = DType::f32, std::shared_ptr<Allocator> alloc = nullptr);
     static Tensor zeros(const Shape& shape, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr,
-                        bool reqires_grad = false);
+                        bool requires_grad = false);
     static Tensor ones(const Shape& shape, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr,
-                       bool reqires_grad = false);
+                       bool requires_grad = false);
     static Tensor arange(std::size_t size, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr,
-                         bool reqires_grad = false);
-    static Tensor ones_like(const Tensor& t, std::shared_ptr<Allocator> alloc = nullptr, bool reqires_grad = false);
-    static Tensor from_scalar(float s, std::shared_ptr<Allocator> alloc = nullptr, bool reqires_grad = false);
+                         bool requires_grad = false);
+    static Tensor ones_like(const Tensor& t, std::shared_ptr<Allocator> alloc = nullptr, bool requires_grad = false);
+    static Tensor from_scalar(float s, std::shared_ptr<Allocator> alloc = nullptr, bool requires_grad = false);
 
     // view & reshape
     Tensor view(const Shape& new_shape) const;
@@ -63,7 +63,7 @@ class Tensor {
     const std::shared_ptr<Storage>& storage() const noexcept { return storage_; }
     const std::vector<std::size_t>& strides() const noexcept { return strides_; }
     void* data() const noexcept { return storage_->data; }
-    bool reqires_grad() const noexcept { return reqires_grad_; }
+    bool requires_grad() const noexcept { return requires_grad_; }
 
     std::shared_ptr<Tensor>& grad() { return grad_; }
     const std::shared_ptr<Tensor>& grad() const { return grad_; }
@@ -96,7 +96,7 @@ class Tensor {
     DType dtype_;
     std::shared_ptr<Storage> storage_;
 
-    bool reqires_grad_;
+    bool requires_grad_;
     std::shared_ptr<Tensor> grad_;
     std::shared_ptr<GradFn> grad_fn_;
     std::vector<std::size_t> strides_;
