@@ -7,10 +7,7 @@
 
 namespace minidl {
 
-using GradFnInputs = std::vector<std::weak_ptr<Tensor>>;
-
 struct GradFn : public std::enable_shared_from_this<GradFn> {
-    GradFnInputs inputs_;
     std::string name_;
 
     explicit GradFn(std::string name = "GradFn") : name_(std::move(name)) {}
@@ -20,24 +17,24 @@ struct GradFn : public std::enable_shared_from_this<GradFn> {
 };
 
 struct AddBackward : public GradFn {
-    AddBackward() : GradFn("AddBackward") {}
-    void backward(const Tensor& out_grad) override {
-        auto a = inputs_[0].lock();
-        auto b = inputs_[1].lock();
+    Tensor* a_;
+    Tensor* b_;
 
-        if (a && a->requires_grad()) a->grad() = std::make_shared<Tensor>(out_grad);
-        if (b && b->requires_grad()) b->grad() = std::make_shared<Tensor>(out_grad);
+    explicit AddBackward(Tensor* a, Tensor* b) : GradFn("AddBackward"), a_(a), b_(b) {}
+    void backward(const Tensor& out_grad) override {
+        if (a_->requires_grad()) a_->grad() = std::make_shared<Tensor>(out_grad);
+        if (b_->requires_grad()) b_->grad() = std::make_shared<Tensor>(out_grad);
     }
 };
 
 struct MulBackward : public GradFn {
-    MulBackward() : GradFn("MulBackward") {}
-    void backward(const Tensor& out_grad) override {
-        auto a = inputs_[0].lock();
-        auto b = inputs_[1].lock();
+    Tensor* a_;
+    Tensor* b_;
 
-        if (a && a->requires_grad() && b) a->grad() = std::make_shared<Tensor>(ops::mul(out_grad, *b));
-        if (b && b->requires_grad() && a) b->grad() = std::make_shared<Tensor>(ops::mul(out_grad, *a));
+    explicit MulBackward(Tensor* a, Tensor* b) : GradFn("MulBackward"), a_(a), b_(b) {}
+    void backward(const Tensor& out_grad) override {
+        if (a_->requires_grad()) a_->grad() = std::make_shared<Tensor>(ops::mul(out_grad, *b_));
+        if (b_->requires_grad()) b_->grad() = std::make_shared<Tensor>(ops::mul(out_grad, *a_));
     }
 };
 
