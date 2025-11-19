@@ -7,7 +7,7 @@ namespace minidl::detail {
 // imple
 template <typename T>
 Tensor relu_impl(const Tensor& tensor) noexcept {
-    Tensor out = Tensor::zeros(tensor.shape(), tensor.dtype(), tensor.storage()->alloc_);
+    Tensor out = Tensor::zeros(tensor.shape(), tensor.dtype(), tensor.storage()->alloc_, tensor.requires_grad());
 
     const std::size_t n = out.numel();
 
@@ -30,7 +30,7 @@ Tensor relu_impl(const Tensor& tensor) noexcept {
 
 template <typename T>
 Tensor sigmoid_impl(const Tensor& tensor) noexcept {
-    Tensor out = Tensor::zeros(tensor.shape(), tensor.dtype(), tensor.storage()->alloc_);
+    Tensor out = Tensor::zeros(tensor.shape(), tensor.dtype(), tensor.storage()->alloc_, tensor.requires_grad());
 
     const std::size_t n = out.numel();
 

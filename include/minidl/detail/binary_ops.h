@@ -38,7 +38,8 @@ struct DivOp {
 template <typename T, class Op>
 Tensor binary_impl(const Tensor& a, const Tensor& b, DType promoted_dtype) {
     const auto out_shape = detail::compute_broadcast_shape(a.shape().dims(), b.shape().dims());
-    Tensor out = Tensor::zeros(Shape(out_shape), promoted_dtype, a.storage()->alloc_);
+    bool requires_grad = a.requires_grad() || b.requires_grad();
+    Tensor out = Tensor::zeros(Shape(out_shape), promoted_dtype, a.storage()->alloc_, requires_grad);
     const std::size_t n = out.numel();
     if (n == 0) return out;
 

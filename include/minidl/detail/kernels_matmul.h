@@ -135,7 +135,8 @@ Tensor batched_gemm2d_native(const Tensor& a, const Tensor& b, DType promote_dty
 
     // zero c
     const auto out_shape = get_output_shape(broadcast_batch_shape, M, N);
-    Tensor c = Tensor::zeros(Shape(out_shape), promote_dtype);
+    bool requires_grad = a.requires_grad() || b.requires_grad();
+    Tensor c = Tensor::zeros(Shape(out_shape), promote_dtype, nullptr, requires_grad);
     const Vec c_batch_strides(get_batch_shape(c.strides()));
     const Vec c_gemm_strides(c.strides().end() - 2, c.strides().end());
     T* c_data = static_cast<T*>(c.data());

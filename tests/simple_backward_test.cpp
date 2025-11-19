@@ -13,6 +13,8 @@ TEST(AddBackward, SimpleAddTest) {
 
     Tensor c = ops::add(a, b);
 
+    EXPECT_TRUE(c.requires_grad());
+
     auto gf = std::make_shared<AddBackward>(&a, &b);
     c.grad_fn() = gf;
     c.grad_fn()->backward(Tensor::ones_like(c));
