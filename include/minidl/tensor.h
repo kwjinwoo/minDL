@@ -28,6 +28,19 @@ struct Storage {
     std::shared_ptr<Allocator> alloc_;
 };
 
+struct TensorImpl {
+    // value
+    Shape shape;
+    DType dtype;
+    std::shared_ptr<Storage> storage;
+    std::vector<std::size_t> strides;
+
+    // grad
+    bool requires_grad = false;
+    std::shared_ptr<TensorImpl> grad;
+    std::shared_ptr<GradFn> grad_fn;
+};
+
 class Tensor {
    public:
     // constructor and deleter
