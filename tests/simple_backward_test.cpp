@@ -17,7 +17,7 @@ TEST(AddBackward, SimpleAddTest) {
 
     auto gf = std::make_shared<AddBackward>(&a, &b);
     c.grad_fn() = gf;
-    c.grad_fn()->backward(Tensor::ones_like(c));
+    c.backward();
 
     EXPECT_TRUE(a.grad() != nullptr);
     auto a_grad = a.grad();
@@ -39,7 +39,7 @@ TEST(MulBackward, SimpleMulTest) {
     auto gf = std::make_shared<MulBackward>(&a, &b);
 
     c.grad_fn() = gf;
-    c.grad_fn()->backward(Tensor::ones_like(c));
+    c.backward();
 
     EXPECT_TRUE(a.grad() != nullptr);
     auto a_grad = a.grad();

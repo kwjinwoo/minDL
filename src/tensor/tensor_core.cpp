@@ -1,4 +1,5 @@
 #include "minidl/allocators/default.h"
+#include "minidl/autograd/grad_fn.h"
 #include "minidl/detail/dispatch.h"
 #include "minidl/detail/iter.h"
 #include "minidl/tensor.h"
@@ -74,6 +75,13 @@ Tensor Tensor::to(DType d) {
                 [&] { converter(z, static_cast<const int32_t*>(data())); });
         });
     return out;
+}
+
+// backward
+void Tensor::backward() {
+    if (!requires_grad_) return;
+    Tensor out_grad = Tensor::ones_like(*this);
+    if (grad_fn_) grad_fn_->backward(out_grad);
 }
 
 }  // namespace minidl

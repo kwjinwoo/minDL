@@ -85,6 +85,9 @@ class Tensor {
     // to
     Tensor to(DType);
 
+    // backward
+    void backward();
+
    private:
     static inline std::vector<std::size_t> default_strides(const Shape& shape) {
         const auto dims = shape.dims();
