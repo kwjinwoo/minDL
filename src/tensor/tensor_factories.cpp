@@ -26,15 +26,14 @@ Tensor Tensor::zeros(const Shape& shape, DType dtype, std::shared_ptr<Allocator>
     auto storage = std::make_shared<Storage>(alloc);
 
     Tensor t(shape, dtype, storage, requires_grad);
-    t.strides_ = t.default_strides(shape);
 
-    t.storage_->nbytes = t.numel() * t.itemsize();
+    t.storage()->nbytes = t.numel() * t.itemsize();
 
     if (t.nbytes() == 0) {
-        t.storage_->data = nullptr;
+        t.storage()->data = nullptr;
         return t;
     }
-    t.storage_->data = t.storage_->alloc_->allocate(t.nbytes());
+    t.storage()->data = t.storage()->alloc_->allocate(t.nbytes());
 
     if (!t.data()) throw std::bad_alloc{};
     std::memset(t.data(), 0, t.nbytes());
@@ -46,15 +45,14 @@ Tensor Tensor::ones(const Shape& shape, DType dtype, std::shared_ptr<Allocator> 
     auto storage = std::make_shared<Storage>(alloc);
 
     Tensor t(shape, dtype, storage, requires_grad);
-    t.strides_ = t.default_strides(shape);
 
-    t.storage_->nbytes = t.numel() * t.itemsize();
+    t.storage()->nbytes = t.numel() * t.itemsize();
 
     if (t.nbytes() == 0) {
-        t.storage_->data = nullptr;
+        t.storage()->data = nullptr;
         return t;
     }
-    t.storage_->data = t.storage_->alloc_->allocate(t.nbytes());
+    t.storage()->data = t.storage()->alloc_->allocate(t.nbytes());
     if (!t.data()) throw std::bad_alloc{};
 
     t.fill_ones_(t.data(), t.numel(), dtype);
@@ -67,17 +65,16 @@ Tensor Tensor::arange(std::size_t size, DType dtype, std::shared_ptr<Allocator> 
 
     Shape s({size});
     Tensor t(s, dtype, storage, requires_grad);
-    t.strides_ = t.default_strides(s);
 
-    t.storage_->nbytes = t.numel() * t.itemsize();
+    t.storage()->nbytes = t.numel() * t.itemsize();
 
     if (t.nbytes() == 0) {
-        t.storage_->data = nullptr;
+        t.storage()->data = nullptr;
         return t;
     }
 
-    t.storage_->data = t.storage_->alloc_->allocate(t.nbytes());
-    if (!t.storage_->data) throw std::bad_alloc();
+    t.storage()->data = t.storage()->alloc_->allocate(t.nbytes());
+    if (!t.storage()->data) throw std::bad_alloc();
 
     const std::size_t n = t.numel();
     if (dtype == DType::f32) {
@@ -105,15 +102,14 @@ Tensor Tensor::ones_like(const Tensor& t, std::shared_ptr<Allocator> alloc, bool
     auto storage = std::make_shared<Storage>(alloc);
 
     Tensor out(t.shape(), t.dtype(), storage, requires_grad);
-    out.strides_ = out.default_strides(out.shape());
 
-    out.storage_->nbytes = out.numel() * out.itemsize();
+    out.storage()->nbytes = out.numel() * out.itemsize();
 
     if (out.nbytes() == 0) {
-        out.storage_->data = nullptr;
+        out.storage()->data = nullptr;
         return out;
     }
-    out.storage_->data = out.storage_->alloc_->allocate(out.nbytes());
+    out.storage()->data = out.storage()->alloc_->allocate(out.nbytes());
     if (!out.data()) throw std::bad_alloc{};
 
     out.fill_ones_(out.data(), out.numel(), out.dtype());
@@ -125,16 +121,15 @@ Tensor Tensor::from_scalar(float s, std::shared_ptr<Allocator> alloc, bool requi
     auto storage = std::make_shared<Storage>(alloc);
 
     Tensor t(Shape(), DType::f32, storage, requires_grad);
-    t.strides_ = t.default_strides(t.shape());
 
-    t.storage_->nbytes = t.numel() * t.itemsize();
+    t.storage()->nbytes = t.numel() * t.itemsize();
 
     if (t.nbytes() == 0) {
-        t.storage_->data = nullptr;
+        t.storage()->data = nullptr;
         return t;
     }
 
-    t.storage_->data = t.storage_->alloc_->allocate(t.nbytes());
+    t.storage()->data = t.storage()->alloc_->allocate(t.nbytes());
     if (!t.data()) throw std::bad_alloc{};
 
     auto* x = static_cast<float*>(t.data());

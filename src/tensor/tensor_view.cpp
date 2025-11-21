@@ -1,3 +1,5 @@
+#include <cstddef>
+
 #include "minidl/allocators/default.h"
 #include "minidl/detail/iter.h"
 #include "minidl/tensor.h"
@@ -13,8 +15,8 @@ Tensor Tensor::view(const Shape& new_shape) const {
     }
 
     Tensor out = *this;
-    out.shape_ = new_shape;
-    out.strides_ = default_strides(new_shape);
+    out.impl_->shape = new_shape;
+    out.impl_->strides = default_strides(new_shape);
     return out;
 }
 
@@ -24,14 +26,14 @@ Tensor Tensor::reshape(const Shape& new_shape) const {
     }
     if (numel() == 0 || is_contiguous()) {
         Tensor new_tensor = *this;
-        new_tensor.shape_ = new_shape;
-        new_tensor.strides_ = default_strides(new_shape);
+        new_tensor.impl_->shape = new_shape;
+        new_tensor.impl_->strides = default_strides(new_shape);
         return new_tensor;
     }
 
     Tensor new_tensor = this->contiguous();
-    new_tensor.shape_ = new_shape;
-    new_tensor.strides_ = default_strides(new_shape);
+    new_tensor.impl_->shape = new_shape;
+    new_tensor.impl_->strides = default_strides(new_shape);
     return new_tensor;
 }
 
@@ -63,12 +65,12 @@ Tensor Tensor::transpose(const std::initializer_list<std::size_t> axes_ilist) co
 
     for (std::size_t i = 0; i < n; ++i) {
         const std::size_t src = axes[i];
-        new_shape[i] = shape_[src];
-        new_strides[i] = strides_[src];
+        new_shape[i] = impl_->shape[src];
+        new_strides[i] = impl_->strides[src];
     }
 
-    new_tensor.shape_ = Shape(new_shape);
-    new_tensor.strides_ = std::move(new_strides);
+    new_tensor.impl_->shape = Shape(new_shape);
+    new_tensor.impl_->strides = std::move(new_strides);
 
     return new_tensor;
 }
@@ -76,27 +78,27 @@ Tensor Tensor::transpose(const std::initializer_list<std::size_t> axes_ilist) co
 Tensor Tensor::contiguous() const {
     if (is_contiguous()) return *this;
     if (numel() == 0) {
-        Tensor t(shape_, dtype_, std::make_shared<Storage>(storage_->alloc_));
-        t.storage_->nbytes = 0;
-        t.storage_->data = nullptr;
+        Tensor t(shape(), dtype(), std::make_shared<Storage>(impl_->storage->alloc_));
+        t.storage()->nbytes = 0;
+        t.storage()->data = nullptr;
         return t;
     }
 
     auto item = itemsize();
-    auto alloc = storage_->alloc_;
+    auto alloc = storage()->alloc_;
     auto new_storage = std::make_shared<Storage>(alloc);
     new_storage->nbytes = nbytes();
     new_storage->data = alloc->allocate(new_storage->nbytes);
 
-    Tensor new_tensor(shape_, dtype_, new_storage);
-    new_tensor.strides_ = default_strides(shape_);
+    Tensor new_tensor(shape(), dtype(), new_storage);
+    new_tensor.impl_->strides = default_strides(shape());
 
     // data iter
     const auto* src = static_cast<const std::byte*>(data());
     auto* dst = static_cast<std::byte*>(new_tensor.data());
 
-    const auto& dims = shape_.dims();
-    const auto& st = strides_;
+    const auto& dims = shape().dims();
+    const auto& st = strides();
 
     detail::NdCounter counter(dims);
     std::size_t dst_offset = 0;

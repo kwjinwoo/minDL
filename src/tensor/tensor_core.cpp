@@ -8,7 +8,13 @@ namespace minidl {
 
 // constructor and deleter
 Tensor::Tensor(const Shape& shape, DType dtype, std::shared_ptr<Storage> storage, bool requires_grad)
-    : shape_(shape), dtype_(dtype), storage_(std::move(storage)), requires_grad_(requires_grad) {}
+    : impl_(std::make_shared<TensorImpl>()) {
+    impl_->shape = shape;
+    impl_->dtype = dtype;
+    impl_->storage = std::move(storage);
+    impl_->strides = default_strides(shape);
+    impl_->requires_grad = requires_grad;
+}
 Tensor::~Tensor() = default;
 
 // to helpers
@@ -24,20 +30,19 @@ auto dispatch_out(DType dout, FFloat f_float, FInt32 f_int32) {
 
 // to
 Tensor Tensor::to(DType d) {
-    if (d == dtype_) return *this;
+    if (d == dtype()) return *this;
 
-    auto alloc = storage_->alloc_;
+    auto alloc = storage()->alloc_;
     auto storage = std::make_shared<Storage>(alloc);
 
-    Tensor out(shape_, d, storage);
-    out.strides_ = out.default_strides(shape_);
-    out.storage_->nbytes = out.numel() * out.itemsize();
+    Tensor out(shape(), d, storage, requires_grad());
+    out.storage()->nbytes = out.numel() * out.itemsize();
 
     if (out.nbytes() == 0) {
-        out.storage_->data = nullptr;
+        out.storage()->data = nullptr;
         return out;
     }
-    out.storage_->data = out.storage_->alloc_->allocate(out.nbytes());
+    out.storage()->data = out.storage()->alloc_->allocate(out.nbytes());
 
     if (!out.data()) throw std::bad_alloc();
 
@@ -50,10 +55,10 @@ Tensor Tensor::to(DType d) {
                 z[i] = static_cast<Tout>(x[i]);
             }
         } else {
-            detail::NdCounter it(shape_.dims());
+            detail::NdCounter it(shape().dims());
             std::size_t zi = 0;
             while (!it.done()) {
-                const auto xo = detail::offset_elems(it.idx, strides_);
+                const auto xo = detail::offset_elems(it.idx, strides());
                 z[zi++] = static_cast<Tout>(x[xo]);
                 it.next();
             }
@@ -65,13 +70,13 @@ Tensor Tensor::to(DType d) {
         [&] {
             auto* z = static_cast<float*>(out.data());
             dispatch_in(
-                dtype_, [&] { converter(z, static_cast<const float*>(data())); },
+                dtype(), [&] { converter(z, static_cast<const float*>(data())); },
                 [&] { converter(z, static_cast<const int32_t*>(data())); });
         },
         [&] {
             auto* z = static_cast<int32_t*>(out.data());
             dispatch_in(
-                dtype_, [&] { converter(z, static_cast<const float*>(data())); },
+                dtype(), [&] { converter(z, static_cast<const float*>(data())); },
                 [&] { converter(z, static_cast<const int32_t*>(data())); });
         });
     return out;
@@ -79,9 +84,9 @@ Tensor Tensor::to(DType d) {
 
 // backward
 void Tensor::backward() {
-    if (!requires_grad_) return;
+    if (!requires_grad()) return;
     Tensor out_grad = Tensor::ones_like(*this);
-    if (grad_fn_) grad_fn_->backward(out_grad);
+    if (grad_fn()) grad_fn()->backward(out_grad);
 }
 
 }  // namespace minidl

@@ -71,27 +71,27 @@ class Tensor {
     Tensor transpose(const std::initializer_list<std::size_t> axes_ilist) const;
 
     // get methods
-    const Shape& shape() const noexcept { return shape_; }
-    DType dtype() const noexcept { return dtype_; }
-    const std::shared_ptr<Storage>& storage() const noexcept { return storage_; }
-    const std::vector<std::size_t>& strides() const noexcept { return strides_; }
-    void* data() const noexcept { return storage_->data; }
-    bool requires_grad() const noexcept { return requires_grad_; }
+    const Shape& shape() const noexcept { return impl_->shape; }
+    DType dtype() const noexcept { return impl_->dtype; }
+    const std::shared_ptr<Storage>& storage() const noexcept { return impl_->storage; }
+    const std::vector<std::size_t>& strides() const noexcept { return impl_->strides; }
+    void* data() const noexcept { return impl_->storage->data; }
+    bool requires_grad() const noexcept { return impl_->requires_grad; }
 
-    std::shared_ptr<Tensor>& grad() { return grad_; }
-    const std::shared_ptr<Tensor>& grad() const { return grad_; }
-    std::shared_ptr<GradFn>& grad_fn() { return grad_fn_; }
-    const std::shared_ptr<GradFn>& grad_fn() const { return grad_fn_; }
+    std::shared_ptr<TensorImpl>& grad() { return impl_->grad; }
+    const std::shared_ptr<TensorImpl>& grad() const { return impl_->grad; }
+    std::shared_ptr<GradFn>& grad_fn() { return impl_->grad_fn; }
+    const std::shared_ptr<GradFn>& grad_fn() const { return impl_->grad_fn; }
 
     // utils
-    std::size_t numel() const noexcept { return shape_.numel(); }
-    std::size_t itemsize() const noexcept { return size_of(dtype_); }
+    std::size_t numel() const noexcept { return impl_->shape.numel(); }
+    std::size_t itemsize() const noexcept { return size_of(impl_->dtype); }
     std::size_t nbytes() const noexcept { return numel() * itemsize(); }
-    std::size_t rank() const noexcept { return shape_.rank(); }
+    std::size_t rank() const noexcept { return impl_->shape.rank(); }
     inline bool is_contiguous() const noexcept {
         // 0 element is conventionally contiguous
         if (numel() == 0) return true;
-        return detail::is_contiguous(shape_.dims(), strides());
+        return detail::is_contiguous(impl_->shape.dims(), strides());
     }
     Tensor contiguous() const;
 
@@ -108,14 +108,7 @@ class Tensor {
     }
     static void fill_ones_(void* data, std::size_t numel, DType dtype);
 
-    Shape shape_;
-    DType dtype_;
-    std::shared_ptr<Storage> storage_;
-
-    bool requires_grad_;
-    std::shared_ptr<Tensor> grad_;
-    std::shared_ptr<GradFn> grad_fn_;
-    std::vector<std::size_t> strides_;
+    std::shared_ptr<TensorImpl> impl_;
 };
 
 }  // namespace minidl
