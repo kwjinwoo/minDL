@@ -36,10 +36,11 @@ struct DivOp {
 
 // impl
 template <typename T, class Op>
-Tensor binary_impl(const Tensor& a, const Tensor& b, DType promoted_dtype) {
+Tensor binary_impl(const Tensor& a, const Tensor& b, DType promoted_dtype, std::shared_ptr<GradFn>& grad_fn) {
     const auto out_shape = detail::compute_broadcast_shape(a.shape().dims(), b.shape().dims());
     bool requires_grad = a.requires_grad() || b.requires_grad();
     Tensor out = Tensor::zeros(Shape(out_shape), promoted_dtype, a.storage()->alloc_, requires_grad);
+    if (grad_fn) out.impl()->grad_fn = grad_fn;
     const std::size_t n = out.numel();
     if (n == 0) return out;
 
