@@ -86,7 +86,13 @@ Tensor Tensor::to(DType d) {
 void Tensor::backward() {
     if (!requires_grad()) return;
     Tensor out_grad = Tensor::ones_like(*this);
-    if (grad_fn()) grad_fn()->backward(out_grad);
+    impl_->backward(out_grad);
+}
+
+void TensorImpl::backward(const Tensor& out_grad) {
+    if (!requires_grad) return;
+    accumulate_grad(grad, out_grad);
+    if (grad_fn) grad_fn->backward(out_grad);
 }
 
 }  // namespace minidl

@@ -40,6 +40,8 @@ struct TensorImpl {
     bool requires_grad = false;
     std::shared_ptr<Tensor> grad;
     std::shared_ptr<GradFn> grad_fn;
+
+    void backward(const Tensor& out_grad);
 };
 
 class Tensor {

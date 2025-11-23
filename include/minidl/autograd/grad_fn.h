@@ -40,8 +40,8 @@ struct AddBackward : public GradFn {
     void backward(const Tensor& out_grad) override {
         auto a_ = a_impl_.lock();
         auto b_ = b_impl_.lock();
-        if (a_ && a_->requires_grad) accumulate_grad(a_->grad, out_grad);
-        if (b_ && b_->requires_grad) accumulate_grad(b_->grad, out_grad);
+        if (a_ && a_->requires_grad) a_->backward(out_grad);
+        if (b_ && b_->requires_grad) b_->backward(out_grad);
     }
 };
 
@@ -57,6 +57,7 @@ struct MulBackward : public GradFn {
           b_impl_(b.impl()),
           a_val_(SavedValue::from(a)),
           b_val_(SavedValue::from(b)) {}
+
     void backward(const Tensor& out_grad) override {
         auto a_ = a_impl_.lock();
         auto b_ = b_impl_.lock();
@@ -64,13 +65,13 @@ struct MulBackward : public GradFn {
         if (a_ && a_->requires_grad) {
             auto b_tensor = b_val_.to_tensor();
             auto ga = ops::mul(out_grad, b_tensor);
-            accumulate_grad(a_->grad, ga);
+            a_->backward(ga);
         }
 
         if (b_ && b_->requires_grad) {
             auto a_tensor = a_val_.to_tensor();
             auto gb = ops::mul(out_grad, a_tensor);
-            accumulate_grad(b_->grad, gb);
+            b_->backward(gb);
         }
     }
 };
