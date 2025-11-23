@@ -12,6 +12,7 @@ namespace minidl {
 // forward declaration.
 class Allocator;
 struct GradFn;
+class Tensor;
 
 struct Storage {
     Storage() = default;
@@ -37,7 +38,7 @@ struct TensorImpl {
 
     // grad
     bool requires_grad = false;
-    std::shared_ptr<TensorImpl> grad;
+    std::shared_ptr<Tensor> grad;
     std::shared_ptr<GradFn> grad_fn;
 };
 
@@ -71,6 +72,8 @@ class Tensor {
     Tensor transpose(const std::initializer_list<std::size_t> axes_ilist) const;
 
     // get methods
+    std::shared_ptr<TensorImpl>& impl() { return impl_; }
+    const std::shared_ptr<TensorImpl>& impl() const { return impl_; }
     const Shape& shape() const noexcept { return impl_->shape; }
     DType dtype() const noexcept { return impl_->dtype; }
     const std::shared_ptr<Storage>& storage() const noexcept { return impl_->storage; }
@@ -78,8 +81,8 @@ class Tensor {
     void* data() const noexcept { return impl_->storage->data; }
     bool requires_grad() const noexcept { return impl_->requires_grad; }
 
-    std::shared_ptr<TensorImpl>& grad() { return impl_->grad; }
-    const std::shared_ptr<TensorImpl>& grad() const { return impl_->grad; }
+    std::shared_ptr<Tensor>& grad() { return impl_->grad; }
+    const std::shared_ptr<Tensor>& grad() const { return impl_->grad; }
     std::shared_ptr<GradFn>& grad_fn() { return impl_->grad_fn; }
     const std::shared_ptr<GradFn>& grad_fn() const { return impl_->grad_fn; }
 
@@ -109,6 +112,19 @@ class Tensor {
     static void fill_ones_(void* data, std::size_t numel, DType dtype);
 
     std::shared_ptr<TensorImpl> impl_;
+};
+
+struct SavedValue {
+    Shape shape_;
+    DType dtype_;
+    std::shared_ptr<Storage> storage_;
+    std::vector<std::size_t> strides_;
+
+    SavedValue(Shape shape, DType dtype, std::shared_ptr<Storage> storage, std::vector<std::size_t> strides)
+        : shape_(shape), dtype_(dtype), storage_(std::move(storage)), strides_(strides) {}
+
+    static SavedValue from(const Tensor& t) { return SavedValue(t.shape(), t.dtype(), t.storage(), t.strides()); }
+    Tensor to_tensor() const { return Tensor(shape_, dtype_, storage_, false); }
 };
 
 }  // namespace minidl

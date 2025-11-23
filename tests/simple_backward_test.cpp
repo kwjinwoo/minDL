@@ -15,8 +15,8 @@ TEST(AddBackward, SimpleAddTest) {
 
     EXPECT_TRUE(c.requires_grad());
 
-    auto gf = std::make_shared<AddBackward>(&a, &b);
-    c.grad_fn() = gf;
+    auto gf = std::make_shared<AddBackward>(a, b);
+    c.impl()->grad_fn = gf;
     c.backward();
 
     EXPECT_TRUE(a.grad() != nullptr);
@@ -36,9 +36,9 @@ TEST(MulBackward, SimpleMulTest) {
 
     Tensor c = ops::mul(a, b);
 
-    auto gf = std::make_shared<MulBackward>(&a, &b);
+    auto gf = std::make_shared<MulBackward>(a, b);
 
-    c.grad_fn() = gf;
+    c.impl()->grad_fn = gf;
     c.backward();
 
     EXPECT_TRUE(a.grad() != nullptr);
