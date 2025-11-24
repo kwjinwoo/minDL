@@ -1,3 +1,4 @@
+#include "minidl/autograd/grad_fn.h"
 #include "minidl/detail/dispatch.h"
 #include "minidl/detail/dtype_promotion.h"
 #include "minidl/detail/kernels_matmul.h"
@@ -7,9 +8,11 @@ namespace minidl::ops {
 
 Tensor matmul(const Tensor& a, const Tensor& b) {
     DType promoted_dtype = detail::promote_dtype(a.dtype(), b.dtype());
+    std::shared_ptr<GradFn> grad_fn;
+    if (a.requires_grad() || b.requires_grad()) grad_fn = std::make_shared<MatMulBackward>(a, b);
     return detail::dispatch(
-        promoted_dtype, [&] { return detail::batched_gemm2d_native<float>(a, b, promoted_dtype); },
-        [&] { return detail::batched_gemm2d_native<int32_t>(a, b, promoted_dtype); });
+        promoted_dtype, [&] { return detail::batched_gemm2d_native<float>(a, b, promoted_dtype, grad_fn); },
+        [&] { return detail::batched_gemm2d_native<int32_t>(a, b, promoted_dtype, grad_fn); });
 }
 
 }  // namespace minidl::ops

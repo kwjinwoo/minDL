@@ -126,7 +126,11 @@ struct SavedValue {
         : shape_(shape), dtype_(dtype), storage_(std::move(storage)), strides_(strides) {}
 
     static SavedValue from(const Tensor& t) { return SavedValue(t.shape(), t.dtype(), t.storage(), t.strides()); }
-    Tensor to_tensor() const { return Tensor(shape_, dtype_, storage_, false); }
+    Tensor to_tensor() const {
+        Tensor out(shape_, dtype_, storage_, false);
+        out.impl()->strides = strides_;
+        return out;
+    }
 };
 
 }  // namespace minidl

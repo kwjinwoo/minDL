@@ -106,7 +106,7 @@ void gemm2d_native(void* __restrict x, void* __restrict y, T* z, const std::size
 }
 
 template <typename T>
-Tensor batched_gemm2d_native(const Tensor& a, const Tensor& b, DType promote_dtype) {
+Tensor batched_gemm2d_native(const Tensor& a, const Tensor& b, DType promote_dtype, std::shared_ptr<GradFn> grad_fn) {
     // get batch shapes and strides
     const Vec a_batch_shape = get_batch_shape(a.shape().dims());
     const Vec b_batch_shape = get_batch_shape(b.shape().dims());
@@ -137,6 +137,7 @@ Tensor batched_gemm2d_native(const Tensor& a, const Tensor& b, DType promote_dty
     const auto out_shape = get_output_shape(broadcast_batch_shape, M, N);
     bool requires_grad = a.requires_grad() || b.requires_grad();
     Tensor c = Tensor::zeros(Shape(out_shape), promote_dtype, nullptr, requires_grad);
+    if (grad_fn) c.impl()->grad_fn = grad_fn;
     const Vec c_batch_strides(get_batch_shape(c.strides()));
     const Vec c_gemm_strides(c.strides().end() - 2, c.strides().end());
     T* c_data = static_cast<T*>(c.data());
