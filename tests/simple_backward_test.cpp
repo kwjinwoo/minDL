@@ -137,3 +137,15 @@ TEST(ReluBackward, SimpleReluTest) {
     EXPECT_FLOAT_EQ(x_grad_data[4], 1.0f);
     EXPECT_FLOAT_EQ(x_grad_data[5], 0.0f);
 }
+
+TEST(SigmoidBackward, SimpleSigmoidTest) {
+    auto x = Tensor::from_scalar(0.1760f, nullptr, true);
+
+    auto y = ops::sigmoid(x);
+    EXPECT_TRUE(y.requires_grad());
+    y.backward();
+
+    EXPECT_TRUE(x.grad() != nullptr);
+    auto x_grad_data = static_cast<float*>(x.grad()->data());
+    EXPECT_NEAR(x_grad_data[0], 0.2481f, 1e-4);
+}

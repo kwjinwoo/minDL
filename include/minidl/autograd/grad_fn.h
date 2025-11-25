@@ -139,4 +139,24 @@ struct ReluBackward : public GradFn {
     }
 };
 
+struct SigmoidBackward : public GradFn {
+    std::weak_ptr<TensorImpl> x_impl_;
+    SavedValue x_val_;
+
+    explicit SigmoidBackward(const Tensor& x)
+        : GradFn("SigmoidBackward"), x_impl_(x.impl()), x_val_(SavedValue::from(x)) {}
+
+    void backward(const Tensor& out_grad) override {
+        auto x_ = x_impl_.lock();
+
+        if (x_ && x_->requires_grad) {
+            auto x_val = x_val_.to_tensor();
+            auto y_val = ops::sigmoid(x_val);
+
+            auto gx = ops::mul(out_grad, ops::mul(y_val, ops::sub(Tensor::ones_like(y_val), y_val)));
+            x_->backward(gx);
+        }
+    }
+};
+
 }  // namespace minidl

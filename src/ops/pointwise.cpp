@@ -54,8 +54,10 @@ Tensor relu(const Tensor& tensor) {
 
 // sigmoid
 Tensor sigmoid(const Tensor& tensor) {
+    std::shared_ptr<GradFn> grad_fn;
+    if (tensor.requires_grad()) grad_fn = std::make_shared<SigmoidBackward>(tensor);
     return detail::dispatch(
-        tensor.dtype(), [&] { return detail::sigmoid_impl<float>(tensor); },
+        tensor.dtype(), [&] { return detail::sigmoid_impl<float>(tensor, grad_fn); },
         [&] {
             throw std::runtime_error("sigmoid: (TODO) Not yet implemented type propagation.");
             return tensor;
