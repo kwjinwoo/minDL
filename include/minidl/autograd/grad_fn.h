@@ -109,4 +109,34 @@ struct MatMulBackward : public GradFn {
     }
 };
 
+struct ReluBackward : public GradFn {
+    std::weak_ptr<TensorImpl> x_impl_;
+    SavedValue x_val_;
+
+    explicit ReluBackward(const Tensor& x) : GradFn("ReluBackward"), x_impl_(x.impl()), x_val_(SavedValue::from(x)) {}
+
+    void backward(const Tensor& out_grad) override {
+        auto x_ = x_impl_.lock();
+
+        if (x_ && x_->requires_grad) {
+            auto gx = Tensor::zeros(out_grad.shape());
+            auto x_val = x_val_.to_tensor();
+
+            auto gx_data = static_cast<float*>(gx.data());
+            auto x_val_data = static_cast<const float*>(x_val.data());
+            auto out_grad_data = static_cast<const float*>(out_grad.data());
+
+            const std::size_t n = gx.numel();
+            for (std::size_t i = 0; i < n; i++) {
+                if (x_val_data[i] > 0) {
+                    gx_data[i] = out_grad_data[i];
+                } else {
+                    gx_data[i] = 0.0f;
+                }
+            }
+            x_->backward(gx);
+        }
+    }
+};
+
 }  // namespace minidl

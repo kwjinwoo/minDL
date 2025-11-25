@@ -113,3 +113,27 @@ TEST(MatMulBackward, Simple2DMatMulTest) {
         EXPECT_FLOAT_EQ(b_grad_data[i], expected_gb_data[i]);
     }
 }
+
+TEST(ReluBackward, SimpleReluTest) {
+    auto x = Tensor::zeros({2, 3}, DType::f32, nullptr, true);
+    auto x_data = static_cast<float*>(x.data());
+    x_data[0] = 0.26f;
+    x_data[1] = 0.1f;
+    x_data[2] = 0.52f;
+    x_data[3] = -0.75f;
+    x_data[4] = 0.1f;
+    x_data[5] = -0.14f;
+
+    Tensor y = ops::relu(x);
+    EXPECT_TRUE(y.requires_grad());
+    y.backward();
+
+    EXPECT_TRUE(x.grad() != nullptr);
+    auto x_grad_data = static_cast<float*>(x.grad()->data());
+    EXPECT_FLOAT_EQ(x_grad_data[0], 1.0f);
+    EXPECT_FLOAT_EQ(x_grad_data[1], 1.0f);
+    EXPECT_FLOAT_EQ(x_grad_data[2], 1.0f);
+    EXPECT_FLOAT_EQ(x_grad_data[3], 0.0f);
+    EXPECT_FLOAT_EQ(x_grad_data[4], 1.0f);
+    EXPECT_FLOAT_EQ(x_grad_data[5], 0.0f);
+}

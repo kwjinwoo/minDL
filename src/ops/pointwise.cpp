@@ -45,9 +45,11 @@ Tensor div(const Tensor& a, const Tensor& b) {
 
 // relu
 Tensor relu(const Tensor& tensor) {
+    std::shared_ptr<GradFn> grad_fn;
+    if (tensor.requires_grad()) grad_fn = std::make_shared<ReluBackward>(tensor);
     return detail::dispatch(
-        tensor.dtype(), [&] { return detail::relu_impl<float>(tensor); },
-        [&] { return detail::relu_impl<int32_t>(tensor); });
+        tensor.dtype(), [&] { return detail::relu_impl<float>(tensor, grad_fn); },
+        [&] { return detail::relu_impl<int32_t>(tensor, grad_fn); });
 }
 
 // sigmoid

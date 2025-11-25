@@ -6,9 +6,9 @@
 namespace minidl::detail {
 // imple
 template <typename T>
-Tensor relu_impl(const Tensor& tensor) noexcept {
+Tensor relu_impl(const Tensor& tensor, std::shared_ptr<GradFn> grad_fn) noexcept {
     Tensor out = Tensor::zeros(tensor.shape(), tensor.dtype(), tensor.storage()->alloc_, tensor.requires_grad());
-
+    if (grad_fn) out.impl()->grad_fn = grad_fn;
     const std::size_t n = out.numel();
 
     auto* z = static_cast<T*>(out.data());
