@@ -8,8 +8,8 @@
 using namespace minidl;
 
 TEST(AddBackward, SimpleAddTest) {
-    auto a = Tensor::from_scalar(2.0f, nullptr, true);
-    auto b = Tensor::from_scalar(3.0f, nullptr, true);
+    auto a = Tensor::from_scalar(2.0f, DType::f32, nullptr, true);
+    auto b = Tensor::from_scalar(3.0f, DType::f32, nullptr, true);
 
     Tensor c = ops::add(a, b);
 
@@ -29,8 +29,8 @@ TEST(AddBackward, SimpleAddTest) {
 }
 
 TEST(MulBackward, SimpleMulTest) {
-    auto a = Tensor::from_scalar(2.0f, nullptr, true);
-    auto b = Tensor::from_scalar(3.0f, nullptr, true);
+    auto a = Tensor::from_scalar(2.0f, DType::f32, nullptr, true);
+    auto b = Tensor::from_scalar(3.0f, DType::f32, nullptr, true);
 
     Tensor c = ops::mul(a, b);
 
@@ -50,8 +50,8 @@ TEST(MulBackward, SimpleMulTest) {
 }
 
 TEST(ChainRule, SimpleChainRuleTest) {
-    auto a = Tensor::from_scalar(2.0f, nullptr, true);
-    auto b = Tensor::from_scalar(3.0f, nullptr, true);
+    auto a = Tensor::from_scalar(2.0f, DType::f32, nullptr, true);
+    auto b = Tensor::from_scalar(3.0f, DType::f32, nullptr, true);
 
     Tensor c1 = ops::mul(a, b);
     Tensor c2 = ops::mul(b, b);
@@ -139,7 +139,7 @@ TEST(ReluBackward, SimpleReluTest) {
 }
 
 TEST(SigmoidBackward, SimpleSigmoidTest) {
-    auto x = Tensor::from_scalar(0.1760f, nullptr, true);
+    auto x = Tensor::from_scalar(0.1760f, DType::f32, nullptr, true);
 
     auto y = ops::sigmoid(x);
     EXPECT_TRUE(y.requires_grad());

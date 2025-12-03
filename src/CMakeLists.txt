@@ -19,6 +19,7 @@ minidl_set_warnings(minidl_core)
 add_library(minidl_ops STATIC
     ops/pointwise.cpp
     ops/matmul.cpp
+    ops/reduction.cpp
     kernels/kernels_pointwise.cpp
 )
 target_include_directories(minidl_ops

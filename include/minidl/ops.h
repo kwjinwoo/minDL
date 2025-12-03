@@ -17,4 +17,7 @@ Tensor sigmoid(const Tensor& /*tensor*/);
 
 // matmul
 Tensor matmul(const Tensor& /*lhs*/, const Tensor& /*rhs*/);
+
+// sum
+Tensor sum(const Tensor&);
 }  // namespace minidl::ops

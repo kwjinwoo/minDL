@@ -116,11 +116,11 @@ Tensor Tensor::ones_like(const Tensor& t, std::shared_ptr<Allocator> alloc, bool
     return out;
 }
 
-Tensor Tensor::from_scalar(float s, std::shared_ptr<Allocator> alloc, bool requires_grad) {
+Tensor Tensor::from_scalar(float s, DType dtype, std::shared_ptr<Allocator> alloc, bool requires_grad) {
     if (alloc == nullptr) alloc = get_default_allocator();
     auto storage = std::make_shared<Storage>(alloc);
 
-    Tensor t(Shape(), DType::f32, storage, requires_grad);
+    Tensor t(Shape(), dtype, storage, requires_grad);
 
     t.storage()->nbytes = t.numel() * t.itemsize();
 
