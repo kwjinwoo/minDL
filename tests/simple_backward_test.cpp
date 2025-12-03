@@ -231,3 +231,28 @@ TEST(ReshapeBackward, SimpleReshapeTest) {
         EXPECT_FLOAT_EQ(x_grad_data[i], 1.0f);
     }
 }
+
+TEST(SumBackward, SimpleBackward) {
+    // x = [1, 2, 3, 4]
+    Tensor x = Tensor::zeros({4}, DType::f32, nullptr, true);
+    float* xd = static_cast<float*>(x.data());
+    xd[0] = 1.0f;
+    xd[1] = 2.0f;
+    xd[2] = 3.0f;
+    xd[3] = 4.0f;
+
+    Tensor y = ops::sum(x);
+
+    // y is scalar, so y.backward() should produce grad on x
+    y.backward();
+
+    ASSERT_TRUE(x.grad() != nullptr);
+
+    float* gx = static_cast<float*>(x.grad()->data());
+
+    // For y = sum(x), dy/dx_i = 1 for all i
+    EXPECT_FLOAT_EQ(gx[0], 1.0f);
+    EXPECT_FLOAT_EQ(gx[1], 1.0f);
+    EXPECT_FLOAT_EQ(gx[2], 1.0f);
+    EXPECT_FLOAT_EQ(gx[3], 1.0f);
+}

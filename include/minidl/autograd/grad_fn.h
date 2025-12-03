@@ -215,4 +215,19 @@ struct ReshapeBackward : public GradFn {
     }
 };
 
+struct SumBackward : public GradFn {
+    std::weak_ptr<TensorImpl> x_impl_;
+
+    explicit SumBackward(const Tensor& x) : GradFn("SumBackward"), x_impl_(x.impl()) {}
+
+    void backward(const Tensor& out_grad) override {
+        auto x_ = x_impl_.lock();
+
+        if (x_ && x_->requires_grad) {
+            Tensor gx = ops::mul(Tensor::ones(x_->shape, x_->dtype), out_grad);
+            x_->backward(gx);
+        }
+    }
+};
+
 }  // namespace minidl
