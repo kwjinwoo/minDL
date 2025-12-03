@@ -1,6 +1,7 @@
 #include <cstddef>
 
 #include "minidl/allocators/default.h"
+#include "minidl/autograd/grad_fn.h"
 #include "minidl/detail/iter.h"
 #include "minidl/tensor.h"
 
@@ -14,9 +15,21 @@ Tensor Tensor::view(const Shape& new_shape) const {
         throw std::runtime_error("view: tensor must be contiguous (use reshape for non-contiguous).");
     }
 
-    Tensor out = *this;
-    out.impl_->shape = new_shape;
-    out.impl_->strides = default_strides(new_shape);
+    auto new_impl_ = std::make_shared<TensorImpl>(*impl_);
+
+    new_impl_->shape = new_shape;
+    new_impl_->strides = default_strides(new_shape);
+
+    new_impl_->grad.reset();
+    new_impl_->grad_fn.reset();
+
+    Tensor out;
+    out.impl_ = std::move(new_impl_);
+
+    if (requires_grad()) {
+        out.impl_->grad_fn = std::make_shared<ViewBackward>(*this, shape());
+        out.impl_->requires_grad = true;
+    }
     return out;
 }
 
@@ -25,23 +38,38 @@ Tensor Tensor::reshape(const Shape& new_shape) const {
         throw std::runtime_error("reshape: new_shape.numel() must equal the current numel().");
     }
     if (numel() == 0 || is_contiguous()) {
-        Tensor new_tensor = *this;
-        new_tensor.impl_->shape = new_shape;
-        new_tensor.impl_->strides = default_strides(new_shape);
-        return new_tensor;
+        auto new_impl_ = std::make_shared<TensorImpl>(*impl_);
+        new_impl_->shape = new_shape;
+        new_impl_->strides = default_strides(new_shape);
+
+        new_impl_->grad.reset();
+        new_impl_->grad_fn.reset();
+
+        Tensor out;
+        out.impl_ = std::move(new_impl_);
+
+        if (requires_grad()) {
+            out.impl_->grad_fn = std::make_shared<ReshapeBackward>(*this, shape());
+            out.impl_->requires_grad = true;
+        }
+        return out;
     }
 
     Tensor new_tensor = this->contiguous();
     new_tensor.impl_->shape = new_shape;
     new_tensor.impl_->strides = default_strides(new_shape);
+
+    if (requires_grad()) {
+        new_tensor.impl_->grad_fn = std::make_shared<ReshapeBackward>(*this, shape());
+        new_tensor.impl_->requires_grad = true;
+    }
+
     return new_tensor;
 }
 
-Tensor Tensor::transpose(const std::initializer_list<std::size_t> axes_ilist) const {
+Tensor Tensor::transpose(const std::vector<std::size_t> axes) const {
     const std::size_t n = rank();
-    if (axes_ilist.size() != n) throw std::runtime_error("axis Size Must be same with rank.");
-
-    std::vector<std::size_t> axes(axes_ilist.begin(), axes_ilist.end());
+    if (axes.size() != n) throw std::runtime_error("axis Size Must be same with rank.");
 
     std::vector<bool> seen(n, false);
     for (auto a : axes) {
@@ -59,20 +87,31 @@ Tensor Tensor::transpose(const std::initializer_list<std::size_t> axes_ilist) co
     }
     if (identity) return *this;
 
-    Tensor new_tensor = *this;
     std::vector<std::size_t> new_shape(n);
     std::vector<std::size_t> new_strides(n);
-
     for (std::size_t i = 0; i < n; ++i) {
         const std::size_t src = axes[i];
         new_shape[i] = impl_->shape[src];
         new_strides[i] = impl_->strides[src];
     }
 
-    new_tensor.impl_->shape = Shape(new_shape);
-    new_tensor.impl_->strides = std::move(new_strides);
+    // create new impl
+    auto new_impl = std::make_shared<TensorImpl>(*impl_);
+    new_impl->shape = Shape(new_shape);
+    new_impl->strides = std::move(new_strides);
 
-    return new_tensor;
+    new_impl->grad.reset();
+    new_impl->grad_fn.reset();
+
+    Tensor out;
+    out.impl_ = std::move(new_impl);
+
+    if (impl_->requires_grad) {
+        auto grad_fn = std::make_shared<TransposeBackward>(*this, std::vector<std::size_t>(axes.begin(), axes.end()));
+        out.impl()->grad_fn = grad_fn;
+        out.impl()->requires_grad = true;
+    }
+    return out;
 }
 
 Tensor Tensor::contiguous() const {
@@ -91,7 +130,6 @@ Tensor Tensor::contiguous() const {
     new_storage->data = alloc->allocate(new_storage->nbytes);
 
     Tensor new_tensor(shape(), dtype(), new_storage);
-    new_tensor.impl_->strides = default_strides(shape());
 
     // data iter
     const auto* src = static_cast<const std::byte*>(data());
@@ -108,6 +146,7 @@ Tensor Tensor::contiguous() const {
         dst_offset += item;
         counter.next();
     }
+
     return new_tensor;
 }
 

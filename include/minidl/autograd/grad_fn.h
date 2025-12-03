@@ -159,4 +159,60 @@ struct SigmoidBackward : public GradFn {
     }
 };
 
+struct TransposeBackward : public GradFn {
+    std::weak_ptr<TensorImpl> x_impl_;
+    std::vector<std::size_t> axes_;
+
+    explicit TransposeBackward(const Tensor& x, const std::vector<std::size_t>& axes)
+        : GradFn("TransposeBackward"), x_impl_(x.impl()), axes_(axes) {}
+
+    void backward(const Tensor& out_grad) override {
+        auto x_ = x_impl_.lock();
+
+        if (!x_ || !x_->requires_grad) return;
+
+        std::vector<std::size_t> inv_axes(axes_.size());
+        for (std::size_t i = 0; i < axes_.size(); i++) {
+            inv_axes[axes_[i]] = i;
+        }
+
+        Tensor gx = out_grad.transpose(inv_axes);
+        x_->backward(gx);
+    }
+};
+
+struct ViewBackward : public GradFn {
+    std::weak_ptr<TensorImpl> x_impl_;
+    Shape origin_shape_;
+
+    explicit ViewBackward(const Tensor& x, const Shape& s)
+        : GradFn("ViewBackward"), x_impl_(x.impl()), origin_shape_(s) {}
+
+    void backward(const Tensor& out_grad) override {
+        auto x_ = x_impl_.lock();
+
+        if (x_ && x_->requires_grad) {
+            Tensor gx = out_grad.view(origin_shape_);
+            x_->backward(gx);
+        }
+    }
+};
+
+struct ReshapeBackward : public GradFn {
+    std::weak_ptr<TensorImpl> x_impl_;
+    Shape origin_shape_;
+
+    explicit ReshapeBackward(const Tensor& x, const Shape& s)
+        : GradFn("ReshapeBackward"), x_impl_(x.impl()), origin_shape_(s) {}
+
+    void backward(const Tensor& out_grad) override {
+        auto x_ = x_impl_.lock();
+
+        if (x_ && x_->requires_grad) {
+            Tensor gx = out_grad.reshape(origin_shape_);
+            x_->backward(gx);
+        }
+    }
+};
+
 }  // namespace minidl

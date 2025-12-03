@@ -46,8 +46,8 @@ struct TensorImpl {
 
 class Tensor {
    public:
-    // constructor and deleter
-    Tensor() = delete;
+    // constructor and destructor
+    Tensor();
     Tensor(const Shape& shape, DType dtype, std::shared_ptr<Storage> storage, bool requires_grad = false);
     ~Tensor();
 
@@ -71,7 +71,7 @@ class Tensor {
     // view & reshape
     Tensor view(const Shape& new_shape) const;
     Tensor reshape(const Shape& new_shape) const;
-    Tensor transpose(const std::initializer_list<std::size_t> axes_ilist) const;
+    Tensor transpose(const std::vector<std::size_t> axes) const;
 
     // get methods
     std::shared_ptr<TensorImpl>& impl() { return impl_; }

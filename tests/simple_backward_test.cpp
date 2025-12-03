@@ -149,3 +149,85 @@ TEST(SigmoidBackward, SimpleSigmoidTest) {
     auto x_grad_data = static_cast<float*>(x.grad()->data());
     EXPECT_NEAR(x_grad_data[0], 0.2481f, 1e-4);
 }
+
+TEST(TransposeBackward, SimpleTransposeTest) {
+    auto x = Tensor::ones({2, 3}, DType::f32, nullptr, true);
+    auto x_data = static_cast<float*>(x.data());
+    x_data[0] = 2.3f;
+    x_data[1] = 3.3f;
+    x_data[2] = -1.6f;
+    x_data[3] = 0.5f;
+    x_data[4] = 24.0f;
+    x_data[5] = -12.3f;
+
+    auto x_transposed = x.transpose({1, 0});
+    EXPECT_TRUE(x_transposed.requires_grad());
+
+    x_transposed.backward();
+    EXPECT_TRUE(x.grad() != nullptr);
+
+    auto x_grad = x.grad();
+    auto x_grad_data = static_cast<float*>(x_grad->data());
+
+    for (std::size_t i = 0; i < x.numel(); i++) {
+        EXPECT_FLOAT_EQ(x_grad_data[i], 1.0f);
+    }
+}
+
+TEST(ViewBackward, SimpleViewTest) {
+    auto x = Tensor::ones({2, 3}, DType::f32, nullptr, true);
+    auto x_data = static_cast<float*>(x.data());
+    x_data[0] = 2.3f;
+    x_data[1] = 3.3f;
+    x_data[2] = -1.6f;
+    x_data[3] = 0.5f;
+    x_data[4] = 24.0f;
+    x_data[5] = -12.3f;
+
+    auto x_view = x.view({6});
+    EXPECT_TRUE(x_view.requires_grad());
+
+    x_view.backward();
+    EXPECT_TRUE(x.grad() != nullptr);
+
+    auto x_grad = x.grad();
+    auto grad_dims = x_grad->shape().dims();
+    auto x_dims = x.shape().dims();
+    for (std::size_t i = 0; i < x_grad->rank(); i++) {
+        EXPECT_EQ(grad_dims[i], x_dims[i]);
+    }
+
+    auto x_grad_data = static_cast<const float*>(x_grad->data());
+    for (std::size_t i = 0; i < x_grad->numel(); i++) {
+        EXPECT_FLOAT_EQ(x_grad_data[i], 1.0f);
+    }
+}
+
+TEST(ReshapeBackward, SimpleReshapeTest) {
+    auto x = Tensor::ones({2, 3}, DType::f32, nullptr, true);
+    auto x_data = static_cast<float*>(x.data());
+    x_data[0] = 2.3f;
+    x_data[1] = 3.3f;
+    x_data[2] = -1.6f;
+    x_data[3] = 0.5f;
+    x_data[4] = 24.0f;
+    x_data[5] = -12.3f;
+
+    auto x_reshape = x.reshape({6});
+    EXPECT_TRUE(x_reshape.requires_grad());
+
+    x_reshape.backward();
+    EXPECT_TRUE(x.grad() != nullptr);
+
+    auto x_grad = x.grad();
+    auto grad_dims = x_grad->shape().dims();
+    auto x_dims = x.shape().dims();
+    for (std::size_t i = 0; i < x_grad->rank(); i++) {
+        EXPECT_EQ(grad_dims[i], x_dims[i]);
+    }
+
+    auto x_grad_data = static_cast<const float*>(x_grad->data());
+    for (std::size_t i = 0; i < x_grad->numel(); i++) {
+        EXPECT_FLOAT_EQ(x_grad_data[i], 1.0f);
+    }
+}

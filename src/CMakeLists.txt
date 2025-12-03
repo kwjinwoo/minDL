@@ -9,12 +9,10 @@ add_library(minidl_core STATIC
     detail/iter.cpp
     detail/config.cpp
 )
-
 target_include_directories(minidl_core
     PUBLIC
         ${MINIDL_PUBLIC_INCLUDE_DIR}
 )
-
 minidl_set_warnings(minidl_core)
 
 # 2) minidl_ops
@@ -23,21 +21,28 @@ add_library(minidl_ops STATIC
     ops/matmul.cpp
     kernels/kernels_pointwise.cpp
 )
-
 target_include_directories(minidl_ops
     PUBLIC
         ${MINIDL_PUBLIC_INCLUDE_DIR}
 )
-
 target_link_libraries(minidl_ops
   PUBLIC  minidl_core OpenMP::OpenMP_CXX
 )
+minidl_set_warnings(minidl_ops)
 
-set_target_properties(minidl_ops PROPERTIES
+# 3) minidl_nn
+add_library(minidl_nn STATIC
+nn/module.cpp
+)
+target_include_directories(minidl_nn
+PUBLIC
+${MINIDL_PUBLIC_INCLUDE_DIR}
+)
+minidl_set_warnings(minidl_nn)
+
+set_target_properties(minidl_ops minidl_nn PROPERTIES
     POSITION_INDEPENDENT_CODE ON
 )
-
-minidl_set_warnings(minidl_ops)
 
 # interface
 add_library(minidl INTERFACE)
@@ -45,6 +50,7 @@ target_link_libraries(minidl
     INTERFACE
         minidl_core
         minidl_ops
+        minidl_nn
 )
 target_include_directories(minidl
     INTERFACE

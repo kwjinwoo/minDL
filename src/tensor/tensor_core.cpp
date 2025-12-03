@@ -7,6 +7,7 @@
 namespace minidl {
 
 // constructor and deleter
+Tensor::Tensor() = default;
 Tensor::Tensor(const Shape& shape, DType dtype, std::shared_ptr<Storage> storage, bool requires_grad)
     : impl_(std::make_shared<TensorImpl>()) {
     impl_->shape = shape;
