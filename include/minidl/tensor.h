@@ -106,6 +106,7 @@ class Tensor {
 
     // backward
     void backward();
+    void detach_();
 
    private:
     static inline std::vector<std::size_t> default_strides(const Shape& shape) {

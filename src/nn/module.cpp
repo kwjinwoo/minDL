@@ -15,9 +15,12 @@ Linear::Linear(std::size_t in_features, std::size_t out_features, bool use_bias)
 }
 
 Tensor Linear::forward(const Tensor& x) const {
-    Tensor out = ops::matmul(x, weight_.transpose({1, 0}));
-    if (use_bias_) out = ops::add(out, bias_);
-    return out;
+    Tensor matmul_out = ops::matmul(x, weight_.transpose({1, 0}));
+    if (use_bias_) {
+        return ops::add(matmul_out, bias_);
+    } else {
+        return matmul_out;
+    }
 }
 
 }  // namespace minidl::nn

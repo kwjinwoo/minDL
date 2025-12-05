@@ -96,4 +96,10 @@ void TensorImpl::backward(const Tensor& out_grad) {
     if (grad_fn) grad_fn->backward(out_grad);
 }
 
+void Tensor::detach_() {
+    if (!impl_) return;
+    impl_->grad_fn.reset();
+    impl_->requires_grad = false;
+    impl_->grad.reset();
+}
 }  // namespace minidl
