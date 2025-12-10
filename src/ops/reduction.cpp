@@ -11,7 +11,7 @@ Tensor sum(const Tensor& tensor, const std::vector<std::size_t>& axes, bool keep
         [&] { return detail::sum_impl<int32_t>(tensor, axes, keepdims); });
 
     if (tensor.requires_grad()) {
-        y.impl()->grad_fn = std::make_shared<SumBackward>(tensor);
+        y.impl()->grad_fn = std::make_shared<SumBackward>(tensor, tensor.shape(), axes, keepdims);
     }
     return y;
 }
@@ -26,7 +26,7 @@ Tensor sum(const Tensor& tensor, bool keepdims) {
         [&] { return detail::sum_impl<int32_t>(tensor, axes, keepdims); });
 
     if (tensor.requires_grad()) {
-        y.impl()->grad_fn = std::make_shared<SumBackward>(tensor);
+        y.impl()->grad_fn = std::make_shared<SumBackward>(tensor, tensor.shape(), axes, keepdims);
     }
     return y;
 }

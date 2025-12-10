@@ -256,3 +256,79 @@ TEST(SumBackward, SimpleBackward) {
     EXPECT_FLOAT_EQ(gx[2], 1.0f);
     EXPECT_FLOAT_EQ(gx[3], 1.0f);
 }
+
+TEST(SumBackward, SumAll_NoKeepdims) {
+    Tensor x = Tensor::zeros({2, 3}, DType::f32, nullptr, true);
+    float* d = static_cast<float*>(x.data());
+    d[0] = 1;
+    d[1] = 2;
+    d[2] = 3;
+    d[3] = 4;
+    d[4] = 5;
+    d[5] = 6;
+
+    Tensor y = ops::sum(x, /*keepdims=*/false);  // scalar
+    y.backward();                                // dy/dy = 1
+
+    ASSERT_TRUE(x.grad() != nullptr);
+    float* gx = static_cast<float*>(x.grad()->data());
+
+    for (int i = 0; i < 6; ++i) {
+        EXPECT_FLOAT_EQ(gx[i], 1.0f);
+    }
+}
+
+TEST(SumBackward, SumAxis0_Keepdims) {
+    Tensor x = Tensor::zeros({2, 3}, DType::f32, nullptr, true);
+    float* d = static_cast<float*>(x.data());
+    d[0] = 1;
+    d[1] = 2;
+    d[2] = 3;
+    d[3] = 4;
+    d[4] = 5;
+    d[5] = 6;
+
+    std::vector<std::size_t> axes{0};
+    Tensor y = ops::sum(x, axes, /*keepdims=*/true);  // shape (1,3)
+    y.backward();
+
+    ASSERT_TRUE(x.grad() != nullptr);
+    float* gx = static_cast<float*>(x.grad()->data());
+
+    EXPECT_FLOAT_EQ(gx[0], 1.0f);  // column 0
+    EXPECT_FLOAT_EQ(gx[3], 1.0f);
+
+    EXPECT_FLOAT_EQ(gx[1], 1.0f);  // column 1
+    EXPECT_FLOAT_EQ(gx[4], 1.0f);
+
+    EXPECT_FLOAT_EQ(gx[2], 1.0f);  // column 2
+    EXPECT_FLOAT_EQ(gx[5], 1.0f);
+}
+
+TEST(SumBackward, SumAxis1_NoKeepdims) {
+    Tensor x = Tensor::zeros({2, 3}, DType::f32, nullptr, true);
+    float* d = static_cast<float*>(x.data());
+    d[0] = 1;
+    d[1] = 2;
+    d[2] = 3;
+    d[3] = 4;
+    d[4] = 5;
+    d[5] = 6;
+
+    std::vector<std::size_t> axes{1};
+    Tensor y = ops::sum(x, axes, /*keepdims=*/false);  // shape (2)
+    y.backward();
+
+    ASSERT_TRUE(x.grad() != nullptr);
+    float* gx = static_cast<float*>(x.grad()->data());
+
+    // row 0
+    EXPECT_FLOAT_EQ(gx[0], 1.0f);
+    EXPECT_FLOAT_EQ(gx[1], 1.0f);
+    EXPECT_FLOAT_EQ(gx[2], 1.0f);
+
+    // row 1
+    EXPECT_FLOAT_EQ(gx[3], 1.0f);
+    EXPECT_FLOAT_EQ(gx[4], 1.0f);
+    EXPECT_FLOAT_EQ(gx[5], 1.0f);
+}

@@ -182,15 +182,53 @@ struct ReshapeBackward : public GradFn {
 
 struct SumBackward : public GradFn {
     Tensor x_;
+    Shape in_shape_;
+    std::vector<std::size_t> axes_;
+    bool keepdims_;
 
-    explicit SumBackward(const Tensor& x) : GradFn("SumBackward"), x_(x) {}
+    explicit SumBackward(const Tensor& x, const Shape& shape, const std::vector<std::size_t>& axes, bool keepdims)
+        : GradFn("SumBackward"), x_(x), in_shape_(shape), axes_(axes), keepdims_(keepdims) {}
 
     void backward(const Tensor& out_grad) override {
-        if (x_.requires_grad()) {
-            Tensor gx = ops::mul(Tensor::ones(x_.shape(), x_.dtype()), out_grad);
-            gx.detach_();
-            x_.impl()->backward(gx);
+        if (!x_.requires_grad()) return;
+
+        const auto r = in_shape_.rank();
+        std::vector<bool> reduction(r, axes_.empty());
+        if (!axes_.empty()) {
+            for (auto axis : axes_) {
+                if (axis >= r) throw std::runtime_error("SumBackward: axis of range.");
+                reduction[axis] = true;
+            }
         }
+
+        Tensor gx;
+
+        if (keepdims_) {
+            if (out_grad.shape().dims() == in_shape_.dims()) {
+                gx = out_grad;
+            } else {
+                gx = ops::mul(Tensor::ones(in_shape_, x_.dtype()), out_grad);
+            }
+        } else {
+            const auto& out_dims = out_grad.shape().dims();
+            std::vector<std::size_t> reshaped_dims;
+            reshaped_dims.reserve(r);
+
+            std::size_t out_i = 0;
+            for (std::size_t i = 0; i < r; i++) {
+                if (reduction[i]) {
+                    reshaped_dims.push_back(1);
+                } else {
+                    reshaped_dims.push_back(out_dims[out_i++]);
+                }
+            }
+
+            Tensor reshaped_out_grad = out_grad.view(Shape(reshaped_dims));
+            gx = ops::mul(Tensor::ones(in_shape_, x_.dtype()), reshaped_out_grad);
+        }
+
+        gx.detach_();
+        x_.impl()->backward(gx);
     }
 };
 
