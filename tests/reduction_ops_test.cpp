@@ -72,3 +72,43 @@ TEST(SumOp, EmptyTensor) {
     float* yd = static_cast<float*>(y.data());
     EXPECT_FLOAT_EQ(*yd, 0.0f);  // convention: empty sum = 0
 }
+
+static Tensor make_2x3_tensor_1_to_6(bool requires_grad = false) {
+    Tensor x = Tensor::zeros({2, 3}, DType::f32, nullptr, requires_grad);
+    auto* data = static_cast<float*>(x.data());
+    data[0] = 1.0f;
+    data[1] = 2.0f;
+    data[2] = 3.0f;
+    data[3] = 4.0f;
+    data[4] = 5.0f;
+    data[5] = 6.0f;
+    return x;
+}
+
+TEST(SumOp, SumAllNoKeepdims) {
+    auto x = make_2x3_tensor_1_to_6(false);
+    std::vector<std::size_t> axes;  // empty
+    Tensor y = ops::sum(x, axes, /*keepdims=*/false);
+
+    // rank 0 scalar라고 가정: shape().dims().size() == 0
+    const auto& out_dims = y.shape().dims();
+    EXPECT_EQ(out_dims.size(), 0u);
+
+    auto* y_data = static_cast<float*>(y.data());
+    EXPECT_FLOAT_EQ(y_data[0], 21.0f);
+}
+
+TEST(SumOp, SumAllKeepdims) {
+    auto x = make_2x3_tensor_1_to_6(false);
+
+    std::vector<std::size_t> axes;  // empty
+    Tensor y = ops::sum(x, axes, /*keepdims=*/true);
+
+    const auto& out_dims = y.shape().dims();
+    ASSERT_EQ(out_dims.size(), 2u);
+    EXPECT_EQ(out_dims[0], 1u);
+    EXPECT_EQ(out_dims[1], 1u);
+
+    auto* y_data = static_cast<float*>(y.data());
+    EXPECT_FLOAT_EQ(y_data[0], 21.0f);
+}

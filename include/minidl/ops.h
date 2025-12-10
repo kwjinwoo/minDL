@@ -19,5 +19,6 @@ Tensor sigmoid(const Tensor& /*tensor*/);
 Tensor matmul(const Tensor& /*lhs*/, const Tensor& /*rhs*/);
 
 // sum
-Tensor sum(const Tensor&);
+Tensor sum(const Tensor& tensor, const std::vector<std::size_t>& axes, bool keepdims = true);
+Tensor sum(const Tensor& tensor, bool keepdims = true);
 }  // namespace minidl::ops
