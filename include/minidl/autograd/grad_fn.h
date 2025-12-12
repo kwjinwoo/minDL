@@ -1,4 +1,3 @@
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -35,9 +34,54 @@ struct AddBackward : public GradFn {
 
     explicit AddBackward(const Tensor& a, const Tensor& b) : GradFn("AddBackward"), a_(a), b_(b) {}
 
+    static Tensor reduce_grad_to_shape(const Tensor& grad, const Shape& in_shape) {
+        const Shape& gshape = grad.shape();
+        if (gshape.dims() == in_shape.dims()) return grad;
+
+        const std::size_t out_ndim = gshape.rank();
+        const std::size_t in_ndim = in_shape.rank();
+
+        if (in_ndim > out_ndim) throw std::runtime_error("reduce_grad_to_shape: input rank > grad rank");
+
+        std::vector<std::size_t> axes;
+        const std::size_t lead = out_ndim - in_ndim;
+
+        for (std::size_t i = 0; i < lead; i++) {
+            axes.push_back(i);
+        }
+
+        const std::vector<std::size_t> out_dims = gshape.dims();
+        const std::vector<std::size_t> in_dims = in_shape.dims();
+
+        for (std::size_t i = 0; i < in_ndim; i++) {
+            std::size_t out_dim = out_dims[lead + i];
+            std::size_t in_dim = in_dims[i];
+
+            if (in_dim == 1 && out_dim > 1) {
+                axes.push_back(lead + i);
+            }
+        }
+
+        if (axes.empty()) return grad;
+
+        Tensor reduced = ops::sum(grad, axes, false);
+        if (reduced.shape().dims() != in_dims) {
+            reduced = reduced.reshape(in_shape);
+        }
+        return reduced;
+    }
+
     void backward(const Tensor& out_grad) override {
-        if (a_.requires_grad()) a_.impl()->backward(out_grad);
-        if (b_.requires_grad()) b_.impl()->backward(out_grad);
+        if (a_.requires_grad()) {
+            Tensor ga = reduce_grad_to_shape(out_grad, a_.shape());
+            ga.detach_();
+            a_.impl()->backward(ga);
+        }
+        if (b_.requires_grad()) {
+            Tensor gb = reduce_grad_to_shape(out_grad, b_.shape());
+            gb.detach_();
+            b_.impl()->backward(gb);
+        }
     }
 };
 

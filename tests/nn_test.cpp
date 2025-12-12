@@ -1,6 +1,7 @@
 #include "minidl/nn.h"
 
 #include "gtest/gtest.h"
+#include "minidl/detail/iter.h"
 #include "minidl/ops.h"
 #include "minidl/tensor.h"
 
@@ -169,7 +170,7 @@ TEST(LinearTest, BackwardComputesCorrectGradients) {
 
     // 3) dL/dx = ones(3×2) @ W
     // row-sum(W) = [0.2+(-0.3), 0.5+0.1] = [-0.1, 0.6]
-    // 따라서 각 x[i] grad = [-0.1, 0.6]
+    // x[i] grad = [-0.1, 0.6]
     float expected_dx[6] = {0.7f, -0.2f, 0.7f, -0.2f, 0.7f, -0.2f};
 
     // ===== Check grads =====
@@ -183,8 +184,11 @@ TEST(LinearTest, BackwardComputesCorrectGradients) {
     // weight grad
     ASSERT_TRUE(linear.weight().grad() != nullptr);
     float* w_grad = static_cast<float*>(linear.weight().grad()->data());
+    detail::NdCounter counter(linear.weight().grad()->shape().dims());
     for (int i = 0; i < 4; i++) {
-        EXPECT_FLOAT_EQ(w_grad[i], expected_dW[i]);
+        auto w_off = detail::offset_elems(counter.idx, linear.weight().grad()->strides());
+        EXPECT_FLOAT_EQ(w_grad[w_off], expected_dW[i]);
+        counter.next();
     }
 
     // input grad
