@@ -122,3 +122,18 @@ TEST(FromScalar, CreateF32Scalar) {
     auto* p = static_cast<const float*>(t.data());
     EXPECT_FLOAT_EQ(p[0], 2.0f);
 }
+
+TEST(ZerosLikeTest, BasicShapeDTypeAndValue) {
+    Tensor a = Tensor::ones({2, 3}, DType::f32);
+
+    Tensor z = Tensor::zeros_like(a);
+
+    EXPECT_EQ(z.shape().dims(), a.shape().dims());
+    EXPECT_EQ(z.dtype(), a.dtype());
+    EXPECT_FALSE(z.requires_grad());
+
+    auto* data = static_cast<float*>(z.data());
+    for (int i = 0; i < 6; ++i) {
+        EXPECT_FLOAT_EQ(data[i], 0.0f);
+    }
+}

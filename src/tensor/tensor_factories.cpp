@@ -136,4 +136,10 @@ Tensor Tensor::from_scalar(float s, DType dtype, std::shared_ptr<Allocator> allo
     x[0] = s;
     return t;
 }
+
+Tensor Tensor::zeros_like(const Tensor& t, std::shared_ptr<Allocator> alloc, bool requires_grad) {
+    auto use_alloc = alloc ? alloc : t.storage()->alloc_;
+    return Tensor::zeros(t.shape(), t.dtype(), use_alloc, requires_grad);
+}
+
 }  // namespace minidl

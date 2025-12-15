@@ -68,6 +68,7 @@ class Tensor {
     static Tensor ones_like(const Tensor& t, std::shared_ptr<Allocator> alloc = nullptr, bool requires_grad = false);
     static Tensor from_scalar(float s, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr,
                               bool requires_grad = false);
+    static Tensor zeros_like(const Tensor& t, std::shared_ptr<Allocator> alloc = nullptr, bool requires_grad = false);
 
     // view & reshape
     Tensor view(const Shape& new_shape) const;
