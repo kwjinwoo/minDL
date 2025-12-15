@@ -238,3 +238,20 @@ TEST(SequentialTest, CallOperator) {
     auto* y_data = static_cast<float*>(y.data());
     EXPECT_FLOAT_EQ(y_data[0], 5.0f);
 }
+
+TEST(SequentialTest, ParametersRecursive) {
+    Sequential seq;
+
+    seq.add<Linear>("fc1", 4, 3);
+    seq.add<Linear>("fc2", 3, 2);
+
+    auto params = seq.parameters(/*recurse=*/true);
+
+    // Linear 1개당 weight + bias = 2
+    EXPECT_EQ(params.size(), 4);
+
+    for (auto* p : params) {
+        EXPECT_TRUE(p->requires_grad());
+        EXPECT_NE(p->data(), nullptr);
+    }
+}

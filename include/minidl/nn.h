@@ -18,6 +18,22 @@ class Module {
 
     void register_parameter(const std::string& name, Tensor* param) { parameters_.push_back({name, param}); }
     void register_module(const std::string& name, Module* module) { children_.push_back({name, module}); }
+    std::vector<Tensor*> parameters(bool recursive = true) {
+        std::vector<Tensor*> result;
+
+        for (auto param : parameters_) {
+            result.push_back(param.second);
+        }
+
+        if (recursive) {
+            for (auto child : children_) {
+                std::vector<Tensor*> child_params = child.second->parameters(recursive);
+                result.insert(result.end(), child_params.begin(), child_params.end());
+            }
+        }
+
+        return result;
+    }
 
    protected:
     std::string name_;
