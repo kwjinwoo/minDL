@@ -255,3 +255,52 @@ TEST(SequentialTest, ParametersRecursive) {
         EXPECT_NE(p->data(), nullptr);
     }
 }
+
+TEST(ZeroGradTest, ResetExistingGrad) {
+    Sequential seq;
+    auto& fc = seq.add<Linear>("fc", 3, 2);
+
+    Tensor x = Tensor::ones({1, 3}, DType::f32);
+    Tensor y = fc(x);
+    Tensor out = ops::sum(y);
+    out.backward();
+
+    auto params = seq.parameters();
+    ASSERT_FALSE(params.empty());
+
+    for (auto* p : params) {
+        ASSERT_TRUE(p->grad() != nullptr);
+    }
+
+    seq.zero_grad();
+
+    for (auto* p : params) {
+        auto g = p->grad();
+        ASSERT_TRUE(g != nullptr);
+
+        auto* g_data = static_cast<float*>(g->data());
+        std::size_t n = g->numel();
+
+        for (std::size_t i = 0; i < n; ++i) {
+            EXPECT_FLOAT_EQ(g_data[i], 0.0f);
+        }
+    }
+}
+
+TEST(ZeroGradTest, NoGradDoesNotCrash) {
+    Sequential seq;
+    seq.add<Linear>("fc", 4, 3);
+
+    auto params = seq.parameters();
+    ASSERT_FALSE(params.empty());
+
+    for (auto* p : params) {
+        EXPECT_EQ(p->grad(), nullptr);
+    }
+
+    EXPECT_NO_THROW({ seq.zero_grad(); });
+
+    for (auto* p : params) {
+        EXPECT_EQ(p->grad(), nullptr);
+    }
+}

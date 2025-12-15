@@ -34,6 +34,15 @@ class Module {
 
         return result;
     }
+    void zero_grad() {
+        auto params = parameters();
+        for (auto* p : params) {
+            auto g = p->grad();
+            if (g) {
+                *(g.get()) = Tensor::zeros_like(*p);
+            }
+        }
+    }
 
    protected:
     std::string name_;
