@@ -37,4 +37,31 @@ class Linear : public Module {
     Tensor& weight() { return weight_; }
     Tensor& bias() { return bias_; }
 };
+
+class Sequential : public Module {
+   public:
+    Sequential(std::string name = "Sequantial") : Module(std::move(name)) {}
+
+    template <typename M, typename... Args>
+    M& add(std::string name, Args&&... args) {
+        auto m = std::make_unique<M>(std::forward<Args>(args)...);
+        M& ref = *m;
+
+        register_module(name, m.get());
+        modules_.push_back(std::move(m));
+        return ref;
+    }
+
+    Tensor forward(const Tensor& x) const override {
+        Tensor out = x;
+        for (auto& m : modules_) {
+            out = m->forward(out);
+        }
+        return out;
+    }
+
+   private:
+    std::vector<std::unique_ptr<Module>> modules_;
+};
+
 }  // namespace minidl::nn

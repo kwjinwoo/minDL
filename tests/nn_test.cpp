@@ -198,3 +198,43 @@ TEST(LinearTest, BackwardComputesCorrectGradients) {
         EXPECT_FLOAT_EQ(x_grad[i], expected_dx[i]);
     }
 }
+
+struct AddConst : public Module {
+    Tensor c_;
+
+    explicit AddConst(float v) : Module("AddConst") {
+        c_ = Tensor::ones({1});
+        auto* data = static_cast<float*>(c_.data());
+        data[0] = v;
+    }
+
+    Tensor forward(const Tensor& x) const override { return ops::add(x, c_); }
+};
+
+TEST(SequentialTest, ForwardOrder) {
+    Sequential seq;
+
+    seq.add<AddConst>("add1", 1.0f);
+    seq.add<AddConst>("add2", 2.0f);
+
+    Tensor x = Tensor::zeros({2, 2}, DType::f32);
+    Tensor y = seq.forward(x);
+
+    auto* y_data = static_cast<float*>(y.data());
+
+    // y = x + 1 + 2 = 3
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_FLOAT_EQ(y_data[i], 3.0f);
+    }
+}
+
+TEST(SequentialTest, CallOperator) {
+    Sequential seq;
+    seq.add<AddConst>("add", 5.0f);
+
+    Tensor x = Tensor::zeros({1}, DType::f32);
+    Tensor y = seq(x);  // operator()
+
+    auto* y_data = static_cast<float*>(y.data());
+    EXPECT_FLOAT_EQ(y_data[0], 5.0f);
+}
