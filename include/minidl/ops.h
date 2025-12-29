@@ -21,4 +21,7 @@ Tensor matmul(const Tensor& /*lhs*/, const Tensor& /*rhs*/);
 // sum
 Tensor sum(const Tensor& tensor, const std::vector<std::size_t>& axes, bool keepdims = true);
 Tensor sum(const Tensor& tensor, bool keepdims = true);
+
+// cross entropy
+Tensor cross_entropy(const Tensor& input, const Tensor& target);
 }  // namespace minidl::ops

@@ -20,6 +20,7 @@ add_library(minidl_ops STATIC
     ops/pointwise.cpp
     ops/matmul.cpp
     ops/reduction.cpp
+    ops/loss.cpp
     kernels/kernels_pointwise.cpp
 )
 target_include_directories(minidl_ops

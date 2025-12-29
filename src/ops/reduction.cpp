@@ -30,5 +30,4 @@ Tensor sum(const Tensor& tensor, bool keepdims) {
     }
     return y;
 }
-
 }  // namespace minidl::ops
