@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 
+#include "minidl/detail/iter.h"
 #include "minidl/ops.h"
 #include "minidl/tensor.h"
 
@@ -273,6 +274,73 @@ struct SumBackward : public GradFn {
 
         gx.detach_();
         x_.impl()->backward(gx);
+    }
+};
+
+struct CrossEntropyBackward : public GradFn {
+    Tensor logits_;
+    Tensor softmax_;
+    Tensor targets_;
+    float inv_batch_;
+
+    CrossEntropyBackward(const Tensor& logits, const Tensor& softmax, const Tensor& targets, float inv_batch)
+        : logits_(logits), softmax_(softmax), targets_(targets), inv_batch_(inv_batch) {}
+
+    void backward(const Tensor& out_grad) override {
+        if (!logits_.requires_grad()) return;
+
+        float og = 1.0f;
+        if (out_grad.numel() == 1) {
+            og = *static_cast<const float*>(out_grad.data());
+        } else {
+            throw std::runtime_error("CrossEntropyBackward: out_grad must be scalar (numel==1).");
+        }
+
+        const auto& sd = softmax_.shape().dims();
+        if (sd.size() != 2) throw std::runtime_error("CrossEntropyBackward: softmax rank must be 2.");
+        const std::size_t N = sd[0];
+        const std::size_t C = sd[1];
+
+        const auto& td = targets_.shape().dims();
+        if (td.size() != 2 || td[0] != N || td[1] != 1)
+            throw std::runtime_error("CrossEntropyBackward: target shape must be [N,1].");
+
+        // grad_logits = (softmax - one_hot(target)) * inv_batch * out_grad
+        Tensor grad = Tensor::zeros_like(softmax_);
+        const float scale = inv_batch_ * og;
+
+        const float* p = static_cast<const float*>(softmax_.data());
+        float* g = static_cast<float*>(grad.data());
+        const int32_t* t = static_cast<const int32_t*>(targets_.data());
+
+        const auto& s_strides = softmax_.strides();
+        const auto& g_strides = grad.strides();
+        const auto& t_strides = targets_.strides();
+
+        for (std::size_t i = 0; i < N; ++i) {
+            for (std::size_t c = 0; c < C; ++c) {
+                const std::vector<std::size_t> idx = {i, c};
+                const auto poff = detail::offset_elems(idx, s_strides);
+                const auto goff = detail::offset_elems(idx, g_strides);
+                g[goff] = p[poff] * scale;
+            }
+        }
+
+        for (std::size_t i = 0; i < N; ++i) {
+            const std::vector<std::size_t> tidx = {i, 0};
+            const auto toff = detail::offset_elems(tidx, t_strides);
+            const int32_t yi = t[toff];
+
+            if (yi < 0 || yi >= static_cast<int32_t>(C)) {
+                throw std::runtime_error("CrossEntropyBackward: target index out of range.");
+            }
+
+            const std::vector<std::size_t> gidx = {i, static_cast<std::size_t>(yi)};
+            const auto goff = detail::offset_elems(gidx, g_strides);
+            g[goff] -= scale;
+        }
+
+        logits_.impl()->backward(grad);
     }
 };
 

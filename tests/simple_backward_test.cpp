@@ -332,3 +332,49 @@ TEST(SumBackward, SumAxis1_NoKeepdims) {
     EXPECT_FLOAT_EQ(gx[4], 1.0f);
     EXPECT_FLOAT_EQ(gx[5], 1.0f);
 }
+
+static void fill_f32(Tensor& t, const std::vector<float>& vals) {
+    float* p = static_cast<float*>(t.data());
+    for (size_t i = 0; i < vals.size(); ++i) p[i] = vals[i];
+}
+static void fill_i32(Tensor& t, const std::vector<int32_t>& vals) {
+    int32_t* p = static_cast<int32_t*>(t.data());
+    for (size_t i = 0; i < vals.size(); ++i) p[i] = vals[i];
+}
+
+TEST(CrossEntropyBackward, UniformLogitsMatchesFormula) {
+    const std::size_t N = 2;
+    const std::size_t C = 4;
+
+    Tensor x = Tensor::zeros(Shape({N, C}), DType::f32, nullptr, /*requires_grad=*/true);
+    Tensor t = Tensor::zeros(Shape({N, 1}), DType::i32, nullptr, /*requires_grad=*/false);
+
+    // uniform logits: all zeros
+    // targets: [1, 3]
+    fill_i32(t, {1, 3});
+
+    Tensor loss = ops::cross_entropy(x, t);
+    loss.backward();  // out_grad=1
+
+    EXPECT_TRUE(loss.requires_grad());
+    EXPECT_TRUE(loss.grad_fn() != nullptr);
+    ASSERT_TRUE(x.grad() != nullptr);
+    const float* gx = static_cast<const float*>(x.grad()->data());
+
+    const float p = 1.0f / static_cast<float>(C);
+    const float invN = 1.0f / static_cast<float>(N);
+
+    // expected: (p - onehot)/N
+    // sample0 target=1
+    for (std::size_t c = 0; c < C; ++c) {
+        float expected = p * invN;
+        if (c == 1) expected -= 1.0f * invN;
+        EXPECT_NEAR(gx[0 * C + c], expected, 1e-6f);
+    }
+    // sample1 target=3
+    for (std::size_t c = 0; c < C; ++c) {
+        float expected = p * invN;
+        if (c == 3) expected -= 1.0f * invN;
+        EXPECT_NEAR(gx[1 * C + c], expected, 1e-6f);
+    }
+}

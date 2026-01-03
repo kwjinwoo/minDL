@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <cmath>
+#include <memory>
 
+#include "minidl/autograd/grad_fn.h"
 #include "minidl/detail/iter.h"
 #include "minidl/ops.h"
 
@@ -138,22 +140,33 @@ Tensor cross_entropy(const Tensor& input, const Tensor& target) {
     if (input.dtype() != DType::f32) throw std::runtime_error("cross_entroph: Input Tensor's DType Must be f32.");
 
     const float batch_size = static_cast<const float>(input.shape().dims()[0]);
+
     // softmax about axis 1
-    auto max_val = reduce_max(input);
+    Tensor max_val = reduce_max(input);
     Tensor sub_val = ops::sub(input, max_val);  // x - x_max, broadcast is guranteed.
 
-    Tensor numerator = sub_val;
-    Tensor denominator = ops::sum(exp(numerator), {1}, true);
+    Tensor exp_val = exp(sub_val);                 // [N,C]
+    Tensor sumexp = ops::sum(exp_val, {1}, true);  // [N,1]
+    Tensor softmax = ops::div(exp_val, sumexp);    // [N,C]
 
-    // log
-    Tensor log_val = neg_log_softmax(numerator, denominator);
+    // -log softmax
+    Tensor nll = neg_log_softmax(sub_val, sumexp);  // [N,C]
 
     // gather sum
-    Tensor out = gather_sum(log_val, target);
+    Tensor out = gather_sum(nll, target);
     out = ops::div(out, Tensor::from_scalar(batch_size));
 
-    // later, should implement backward fn
-    // out.impl()->grad_fn = std::make_shared<CrossEntropyBackward>(input, ...);
+    if (input.requires_grad()) {
+        const std::size_t n = input.shape().dims()[0];
+        Tensor softmax_saved = softmax;
+        softmax_saved.detach_();
+        Tensor target_saved = target;
+        target_saved.detach_();
+
+        out.impl()->requires_grad = true;
+        out.impl()->grad_fn = std::make_shared<CrossEntropyBackward>(input, softmax_saved, target_saved,
+                                                                     /*inv_batch=*/1.0f / static_cast<float>(n));
+    }
     return out;
 }
 }  // namespace minidl::ops
