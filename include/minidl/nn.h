@@ -61,6 +61,7 @@ class Linear : public Module {
     Tensor forward(const Tensor& x) const override;
     Tensor& weight() { return weight_; }
     Tensor& bias() { return bias_; }
+    bool use_bias() const { return use_bias_; }
 };
 
 class Sequential : public Module {
