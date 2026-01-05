@@ -142,4 +142,16 @@ Tensor Tensor::zeros_like(const Tensor& t, std::shared_ptr<Allocator> alloc, boo
     return Tensor::zeros(t.shape(), t.dtype(), use_alloc, requires_grad);
 }
 
+Tensor Tensor::empty(const Shape& shape, DType dtype, std::shared_ptr<Allocator> alloc, bool requires_grad) {
+    if (!alloc) alloc = get_default_allocator();
+
+    auto storage = std::make_shared<Storage>(alloc);
+
+    Tensor t(shape, dtype, storage, requires_grad);
+    t.storage()->nbytes = t.numel() * t.itemsize();
+    t.storage()->data = t.storage()->alloc_->allocate(t.nbytes());
+
+    return t;
+}
+
 }  // namespace minidl

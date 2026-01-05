@@ -137,3 +137,9 @@ TEST(ZerosLikeTest, BasicShapeDTypeAndValue) {
         EXPECT_FLOAT_EQ(data[i], 0.0f);
     }
 }
+
+TEST(TensorFactory, EmptyDoesNotInitialize) {
+    auto t = Tensor::empty({10}, DType::f32);
+    EXPECT_EQ(t.numel(), 10);
+    EXPECT_TRUE(t.is_contiguous());
+}
