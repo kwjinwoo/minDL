@@ -143,3 +143,13 @@ TEST(TensorFactory, EmptyDoesNotInitialize) {
     EXPECT_EQ(t.numel(), 10);
     EXPECT_TRUE(t.is_contiguous());
 }
+
+TEST(TensorFactory, RandUniformRange) {
+    auto t = Tensor::rand_uniform({1000}, -1.0f, 1.0f);
+
+    float* p = static_cast<float*>(t.data());
+    for (int i = 0; i < 1000; ++i) {
+        EXPECT_GE(p[i], -1.0f);
+        EXPECT_LE(p[i], 1.0f);
+    }
+}

@@ -1,3 +1,5 @@
+#include <random>
+
 #include "minidl/allocators/default.h"
 #include "minidl/tensor.h"
 
@@ -154,4 +156,25 @@ Tensor Tensor::empty(const Shape& shape, DType dtype, std::shared_ptr<Allocator>
     return t;
 }
 
+inline std::mt19937& global_rng() {
+    static thread_local std::mt19937 gen(42);  // deterministic test
+    return gen;
+}
+
+Tensor Tensor::rand_uniform(const Shape& shape, float low, float high, DType dtype, std::shared_ptr<Allocator> alloc,
+                            bool requires_grad) {
+    if (dtype != DType::f32) throw std::runtime_error("rand_uniform: rand_uniform supports only f32");
+
+    Tensor t = Tensor::empty(shape, dtype, alloc, requires_grad);
+
+    const std::size_t n = t.numel();
+
+    std::uniform_real_distribution<float> dist(low, high);
+    float* p = static_cast<float*>(t.data());
+    for (std::size_t i = 0; i < n; ++i) {
+        p[i] = dist(global_rng());
+    }
+
+    return t;
+}
 }  // namespace minidl

@@ -71,6 +71,9 @@ class Tensor {
     static Tensor zeros_like(const Tensor& t, std::shared_ptr<Allocator> alloc = nullptr, bool requires_grad = false);
     static Tensor empty(const Shape& shape, DType dtype = DType::f32, std::shared_ptr<Allocator> alloc = nullptr,
                         bool requires_grad = false);
+    static Tensor rand_uniform(const Shape& shape, float low, float high, DType dtype = DType::f32,
+                               std::shared_ptr<Allocator> alloc = nullptr, bool requires_grad = false);
+
     // view & reshape
     Tensor view(const Shape& new_shape) const;
     Tensor reshape(const Shape& new_shape) const;
