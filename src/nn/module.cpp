@@ -6,7 +6,8 @@ namespace minidl::nn {
 
 Linear::Linear(std::size_t in_features, std::size_t out_features, bool use_bias)
     : Module("Linear"), use_bias_(use_bias) {
-    weight_ = Tensor::zeros({out_features, in_features}, DType::f32, nullptr, true);
+    float bound = std::sqrt(6.0f / in_features);
+    weight_ = Tensor::rand_uniform({out_features, in_features}, -bound, bound, DType::f32, nullptr, true);
     register_parameter("weight", &weight_);
     if (use_bias_) {
         bias_ = Tensor::zeros({out_features}, DType::f32, nullptr, true);

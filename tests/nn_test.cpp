@@ -199,6 +199,44 @@ TEST(LinearTest, BackwardComputesCorrectGradients) {
     }
 }
 
+TEST(LinearInit, WeightIsRandUniform) {
+    constexpr std::size_t IN = 16;
+    constexpr std::size_t OUT = 32;
+
+    Linear layer(IN, OUT, /*use_bias=*/false);
+
+    const Tensor& w = layer.weight();
+    ASSERT_EQ(w.shape().dims(), Shape({OUT, IN}).dims());
+    ASSERT_TRUE(w.is_contiguous());
+    ASSERT_TRUE(w.requires_grad());
+
+    const float* wd = static_cast<const float*>(w.data());
+    const std::size_t n = w.numel();
+
+    // Kaiming uniform bound
+    const float bound = std::sqrt(6.0f / IN);
+
+    bool all_zero = true;
+    bool all_same = true;
+    float first = wd[0];
+
+    for (std::size_t i = 0; i < n; ++i) {
+        EXPECT_GE(wd[i], -bound);
+        EXPECT_LE(wd[i], bound);
+
+        if (wd[i] != 0.0f) {
+            all_zero = false;
+        }
+
+        if (wd[i] != first) {
+            all_same = false;
+        }
+    }
+
+    EXPECT_FALSE(all_zero);
+    EXPECT_FALSE(all_same);
+}
+
 struct AddConst : public Module {
     Tensor c_;
 
