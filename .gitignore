@@ -66,3 +66,5 @@ Thumbs.db
 *.egg-info/
 
 .clang-format
+
+data/

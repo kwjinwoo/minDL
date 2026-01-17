@@ -9,6 +9,7 @@ project(miniDL LANGUAGES CXX)
 option(MINIDL_BUILD_TESTS "Build miniDL tests." ON)
 option(MINIDL_WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
 option(MINIDL_BUILD_BENCHMARKS "Build miniDL benchmarks." ON)
+option(MINIDL_BUILD_EXAMPLES "Build miniDL examples" ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -43,6 +44,10 @@ if(MINIDL_BUILD_TESTS)
 
   enable_testing()
   add_subdirectory(tests)
+endif()
+
+if(MINIDL_BUILD_EXAMPLES)
+  add_subdirectory(examples)
 endif()
 
 if(MINIDL_BUILD_BENCHMARKS)
