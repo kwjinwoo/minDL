@@ -1,5 +1,12 @@
 # 1. Overview
-This is a benchmark for comparing native GEMM and SIMD GEMM implementations.
+
+This benchmark is part of the miniDL project and is used to compare
+different GEMM implementations within the framework.
+
+Specifically, it evaluates the performance of:
+- a native (naive) GEMM implementation
+- a SIMD-optimized GEMM implementation
+
 # 2. Build & Run
 * **Build**   
 At the project root directory, run the following commands:
