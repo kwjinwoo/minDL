@@ -97,3 +97,28 @@ TEST(DataLoaderTest, EffectiveBatchSizeLast) {
     EXPECT_EQ(y[0], 8);
     EXPECT_EQ(y[1], 9);
 }
+
+TEST(DataLoaderIterator, StopsWhenPosExceedsEndPos) {
+    // dataset size = 10, batch size = 4
+    // expected batch start positions: 0, 4, 8
+    DummyDataset ds(10);
+    DataLoader loader(ds, /*batch_size=*/4, /*shuffle=*/false, /*drop_last=*/false);
+
+    auto it = loader.begin();
+    auto end = loader.end();
+
+    // 1st batch: pos = 0
+    EXPECT_TRUE(it != end);
+    ++it;  // pos = 4
+
+    // 2nd batch: pos = 4
+    EXPECT_TRUE(it != end);
+    ++it;  // pos = 8
+
+    // 3rd batch: pos = 8 (last valid, effective_B = 2)
+    EXPECT_TRUE(it != end);
+    ++it;  // pos = 12
+
+    // pos = 12 > end_pos (=10)
+    EXPECT_FALSE(it != end);
+}

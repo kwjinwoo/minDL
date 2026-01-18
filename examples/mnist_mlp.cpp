@@ -180,8 +180,7 @@ static void train_one_epoch(MnistMLP& model, Optimizer& opt, DataLoader& loader,
         loss.backward();
         opt.step();
 
-        // float loss_v = loss.item<float>(); // adapt to your Tensor API
-        float loss_v = 0.0f;
+        float loss_v = loss.item<float>();
 
         if (step % 100 == 0) {
             float acc = accuracy_top1(logits, batch[1]);
@@ -192,7 +191,7 @@ static void train_one_epoch(MnistMLP& model, Optimizer& opt, DataLoader& loader,
 }
 
 static void evaluate(MnistMLP& model, DataLoader& loader, const std::string& name) {
-    loader.reset_epoch();  // shuffle=false이면 무해, true여도 eval에서 섞고 싶지 않으면 shuffle=false loader를 쓰세요.
+    loader.reset_epoch();
 
     float loss_sum = 0.0f;
     float acc_sum = 0.0f;
@@ -202,8 +201,7 @@ static void evaluate(MnistMLP& model, DataLoader& loader, const std::string& nam
         Tensor logits = model.forward(batch[0]);
         Tensor loss = ops::cross_entropy(logits, batch[1]);
 
-        // float loss_v = loss.item<float>();
-        float loss_v = 0.0f;
+        float loss_v = loss.item<float>();
         float acc = accuracy_top1(logits, batch[1]);
 
         loss_sum += loss_v;

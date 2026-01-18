@@ -30,7 +30,7 @@ class DataLoader {
             return *this;
         }
 
-        bool operator!=(const Iterator& other) const { return pos_ != other.pos_; }
+        bool operator!=(const Iterator& other) const { return loader_ == other.loader_ && pos_ < other.pos_; }
 
        private:
         const DataLoader* loader_;
