@@ -89,6 +89,14 @@ class Tensor {
     void* data() const noexcept { return impl_->storage->data; }
     bool requires_grad() const noexcept { return impl_->requires_grad; }
 
+    // item
+    template <typename T>
+    T item() const {
+        T v{};
+        item_to(&v, dtype_of<T>());
+        return v;
+    }
+
     std::shared_ptr<Tensor>& grad() { return impl_->grad; }
     const std::shared_ptr<Tensor>& grad() const { return impl_->grad; }
     std::shared_ptr<GradFn>& grad_fn() { return impl_->grad_fn; }
@@ -114,6 +122,7 @@ class Tensor {
     void detach_();
 
    private:
+    void item_to(void* data, DType out_dtype) const;
     static inline std::vector<std::size_t> default_strides(const Shape& shape) {
         const auto dims = shape.dims();
         return detail::default_strides(dims);

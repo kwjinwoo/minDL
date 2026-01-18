@@ -50,3 +50,13 @@ TEST(ToTest, TestScalar) {
 
     EXPECT_EQ(p[0], -2);
 }
+
+TEST(TensorItem, ScalarFloat) {
+    Tensor t = Tensor::ones({}, DType::f32);
+    EXPECT_FLOAT_EQ(t.item<float>(), 1.0f);
+}
+
+TEST(TensorItem, NonScalarThrows) {
+    Tensor t = Tensor::ones({2, 2}, DType::f32);
+    EXPECT_THROW(t.item<float>(), std::runtime_error);
+}

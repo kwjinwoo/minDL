@@ -102,4 +102,42 @@ void Tensor::detach_() {
     impl_->requires_grad = false;
     impl_->grad.reset();
 }
+
+// item
+void Tensor::item_to(void* out, DType out_dtype) const {
+    if (rank() != 0) throw std::runtime_error("Tensor::item(): requires scalar tensor.");
+
+    const void* src = data();
+    if (!src) throw std::runtime_error("Tensor::item(): null storage");
+
+    switch (dtype()) {
+        case DType::f32: {
+            float v = *static_cast<const float*>(src);
+            switch (out_dtype) {
+                case DType::f32:
+                    *static_cast<float*>(out) = v;
+                    return;
+                default:
+                    break;
+            }
+            break;
+        }
+        case DType::i32: {
+            std::int32_t v = *static_cast<const std::int32_t*>(src);
+
+            switch (out_dtype) {
+                case DType::i32:
+                    *static_cast<int32_t*>(out) = v;
+                    return;
+
+                default:
+                    break;
+            }
+        }
+        default:
+            break;
+    }
+
+    throw std::runtime_error("Tensor::item(): unsupported dtype conversion");
+}
 }  // namespace minidl

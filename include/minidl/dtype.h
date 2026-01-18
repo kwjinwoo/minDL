@@ -15,4 +15,16 @@ constexpr std::size_t size_of(const DType& dtype) {
     }
     return 0;
 }
+
+template <typename T>
+constexpr DType dtype_of() {
+    if constexpr (std::is_same_v<T, float>) {
+        return DType::f32;
+    } else if constexpr (std::is_same_v<T, std::int32_t>) {
+        return DType::i32;
+    } else {
+        throw std::runtime_error("dtype_of: Unsupported C++ type.");
+    }
+}
+
 }  // namespace minidl
